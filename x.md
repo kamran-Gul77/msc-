@@ -101,3 +101,15 @@ example_sentence text,
 CONSTRAINT vocabulary_exercises_pkey PRIMARY KEY (id),
 CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
 );
+CREATE TABLE public.vocabulary_pool (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+proficiency_level text NOT NULL,
+word text NOT NULL,
+exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['synonym'::text, 'antonym'::text, 'context'::text, 'recognition'::text])),
+correct_answer text NOT NULL,
+options jsonb DEFAULT '[]'::jsonb,
+example_sentence text,
+created_at timestamp with time zone DEFAULT now(),
+used boolean DEFAULT false,
+CONSTRAINT vocabulary_pool_pkey PRIMARY KEY (id)
+);

@@ -67,10 +67,6 @@ export function GrammarMode({ profile }: GrammarModeProps) {
 
   const supabase = createClient();
 
-  useEffect(() => {
-    startNewSession();
-  }, []);
-
   const startNewSession = async () => {
     try {
       const { data, error } = await supabase
@@ -86,6 +82,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       if (error) throw error;
 
       setSessionId(data.id);
+      await generateNewExercise(data.id);
     } catch (error) {
       console.error("Error starting session:", error);
     }
@@ -459,7 +456,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
             <button
               onClick={() => {
                 setShowStarter(false);
-                generateNewExercise();
+                startNewSession();
               }}
               className="px-8 mt-6 py-4 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold rounded-lg shadow-xl hover:from-green-500 hover:to-blue-600 transform transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300"
             >

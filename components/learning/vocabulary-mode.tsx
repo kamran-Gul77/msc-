@@ -69,10 +69,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
   });
 
   // create session on mount
-  useEffect(() => {
-    startNewSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function startNewSession() {
     try {
@@ -526,7 +522,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
               <button
                 onClick={() => {
                   setShowStarter(false);
-                  generateNewExercise();
+                  startNewSession();
                 }}
                 className="px-8 mt-6 py-4 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold rounded-lg shadow-xl hover:from-green-500 hover:to-blue-600 transform transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300"
               >
