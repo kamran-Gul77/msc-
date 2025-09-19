@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
+import { useToast } from "@/hooks/use-toast";
 
 interface GrammarModeProps {
   profile: any;
@@ -47,6 +48,8 @@ interface GrammarExercise {
 
 export function GrammarMode({ profile }: GrammarModeProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+
   const [currentExercise, setCurrentExercise] =
     useState<GrammarExercise | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>("");
@@ -84,6 +87,11 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       setSessionId(data.id);
       await generateNewExercise(data.id);
     } catch (error) {
+      toast({
+        title: "Failed to start session",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
       console.error("Error starting session:", error);
     }
   };
@@ -103,7 +111,10 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to generate exercise");
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "you complete the exerciese congrats");
+      }
       const data = await response.json();
 
       // Save previous exercise into history if exists
@@ -124,11 +135,88 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       setShowResult(false);
       setStartTime(new Date());
     } catch (error) {
+      toast({
+        title: "Failed to generate new exercise",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
       console.error("Error generating exercise:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  // const handleAnswer = async () => {
+  //   if (!userAnswer.trim() || !currentExercise || !sessionId) return;
+
+  //   try {
+  //     setLoading(true);
+
+  //     // Call the backend to check the answer
+  //     const response = await fetch("/api/grammar/generate", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         session_id: sessionId,
+  //         exerciseId: currentExercise.id, // note: camelCase matches backend
+  //         user_id: user?.id,
+
+  //         userAnswer: userAnswer, // matches backend
+  //       }),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errData = await response.json();
+  //       throw new Error(errData.error || "Failed to submit answer");
+  //     }
+
+  //     const result = await response.json();
+
+  //     setIsCorrect(result.correct);
+  //     setShowResult(true);
+
+  //     // Merge result into current exercise
+  //     setCurrentExercise((prev) =>
+  //       prev
+  //         ? {
+  //             ...prev,
+  //             user_answer: userAnswer,
+  //             is_correct: result.correct,
+  //             correct_answer: result.correctAnswer,
+  //             feedback: result.feedback,
+  //           }
+  //         : prev
+  //     );
+
+  //     const timeSpent = startTime
+  //       ? Math.round((Date.now() - startTime.getTime()) / 1000)
+  //       : 0;
+
+  //     // Update stats
+  //     const newStats = {
+  //       total: sessionStats.total + 1,
+  //       correct: sessionStats.correct + (result.correct ? 1 : 0),
+  //       timeSpent: sessionStats.timeSpent + timeSpent,
+  //     };
+  //     setSessionStats(newStats);
+
+  //     if (result.correct) setScore((s) => s + 15);
+
+  //     // Update session in Supabase
+  //     await supabase
+  //       .from("learning_sessions")
+  //       .update({
+  //         score: score + (result.correct ? 15 : 0),
+  //         exercises_completed: newStats.total,
+  //         duration: newStats.timeSpent,
+  //       })
+  //       .eq("id", sessionId);
+  //   } catch (err) {
+  //     console.error("Error submitting answer:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleAnswer = async () => {
     if (!userAnswer.trim() || !currentExercise || !sessionId) return;
@@ -136,30 +224,30 @@ export function GrammarMode({ profile }: GrammarModeProps) {
     try {
       setLoading(true);
 
-      // Call the backend to check the answer
       const response = await fetch("/api/grammar/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionId,
-          exerciseId: currentExercise.id, // note: camelCase matches backend
+          exerciseId: currentExercise.id,
           user_id: user?.id,
-
-          userAnswer: userAnswer, // matches backend
+          userAnswer: userAnswer,
         }),
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || "Failed to submit answer");
+        throw new Error(errData.error || "failed to sumbit answer");
       }
-
       const result = await response.json();
 
+      const timeSpent = startTime
+        ? Math.round((Date.now() - startTime.getTime()) / 1000)
+        : 0;
+
+      // ✅ Update local state
       setIsCorrect(result.correct);
       setShowResult(true);
-
-      // Merge result into current exercise
       setCurrentExercise((prev) =>
         prev
           ? {
@@ -172,21 +260,31 @@ export function GrammarMode({ profile }: GrammarModeProps) {
           : prev
       );
 
-      const timeSpent = startTime
-        ? Math.round((Date.now() - startTime.getTime()) / 1000)
-        : 0;
-
-      // Update stats
       const newStats = {
         total: sessionStats.total + 1,
         correct: sessionStats.correct + (result.correct ? 1 : 0),
         timeSpent: sessionStats.timeSpent + timeSpent,
       };
       setSessionStats(newStats);
-
       if (result.correct) setScore((s) => s + 15);
 
-      // Update session in Supabase
+      // ✅ Save to grammar_exercises
+      await supabase.from("grammar_exercises").insert({
+        session_id: sessionId,
+        user_id: user?.id,
+        sentence: currentExercise.sentence,
+        exercise_type: currentExercise.exercise_type,
+        user_answer: userAnswer,
+        correct_answer: result.correctAnswer,
+        is_correct: result.correct,
+        grammar_rule: currentExercise.grammar_rule,
+        feedback: result.feedback,
+        time_taken: timeSpent,
+        options: currentExercise.options || [],
+        blank_position: currentExercise.blank_position,
+      });
+
+      // ✅ Update session progress
       await supabase
         .from("learning_sessions")
         .update({
@@ -195,12 +293,18 @@ export function GrammarMode({ profile }: GrammarModeProps) {
           duration: newStats.timeSpent,
         })
         .eq("id", sessionId);
-    } catch (err) {
-      console.error("Error submitting answer:", err);
+    } catch (error) {
+      toast({
+        title: "Failed to handle answer",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
+      console.error("Error submitting answer:", error);
     } finally {
       setLoading(false);
     }
   };
+
   const fetchHistory = async () => {
     if (!user?.id) return; // Ensure that user is authenticated and has a valid user_id
     setHistory([]);
@@ -228,6 +332,11 @@ export function GrammarMode({ profile }: GrammarModeProps) {
 
       setShowHistory(true);
     } catch (err) {
+      toast({
+        title: "Failed to fetch  history",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
       console.error("Error fetching history:", err);
     }
   };

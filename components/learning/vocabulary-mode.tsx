@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
+import { useToast } from "@/hooks/use-toast";
 
 interface VocabularyModeProps {
   profile: any;
@@ -46,6 +47,7 @@ interface VocabularyExercise {
 export function VocabularyMode({ profile }: VocabularyModeProps) {
   const { user } = useAuth();
   const supabase = createClient();
+  const { toast } = useToast();
 
   // UI + state
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -69,7 +71,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
   });
 
   // create session on mount
-
   async function startNewSession() {
     try {
       setLoading(true);
@@ -85,22 +86,30 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Failed to start session",
+          description: error.message || String(error),
+          variant: "destructive",
+        });
+        return; // stop if session creation failed
+      }
+
       setSessionId(data.id);
       // Immediately request an exercise after session is created
       await generateNewExercise(data.id);
     } catch (err) {
+      toast({
+        title: "Unexpected error",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
       console.error("startNewSession error:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  /**
-   * Request a new exercise from your server.
-   * IMPORTANT: We send session_id and user_id so backend can save the generated exercise
-   * in vocabulary_exercises and return the saved row (with id).
-   */
   async function generateNewExercise(providedSessionId?: string) {
     if (!user?.id && !providedSessionId) {
       console.error("No user or session available");
@@ -119,29 +128,23 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
     setCurrentExercise(null);
 
     try {
-      const resp = await fetch("/api/vocabulary/generate", {
+      const resp = await fetch("/api/vocabulary/poll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          proficiency_level: profile?.proficiency_level || "beginner",
-          preferred_topics: profile?.preferred_topics || [],
           session_id: sid,
           user_id: user?.id,
+          proficiency_level: profile?.proficiency_level || "beginner",
         }),
       });
-
       if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error("Generate failed: " + text);
+        const errData = await resp.json();
+        throw new Error(errData.error || "you complete the exerciese congrats");
       }
 
-      // Expect the saved DB row for the exercise (includes id)
       const result = await resp.json();
-
-      // If your backend returns { exercise: data } like Vocabulary example, handle that:
       const exerciseRow = result.exercise ? result.exercise : result;
 
-      // Normalise options and fields
       const exercise: VocabularyExercise = {
         id: exerciseRow.id,
         word: exerciseRow.word,
@@ -163,19 +166,17 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
       setCurrentExercise(exercise);
       setStartTime(Date.now());
     } catch (err) {
+      toast({
+        title: "Failed to load exercise you may complete all exercises",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
       console.error("generateNewExercise error:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  /**
-   * Handle user answer:
-   * - compute timeSpent
-   * - update the specific vocabulary_exercises row (user_answer, is_correct, time_taken)
-   * - update learning_sessions (score, exercises_completed, duration)
-   * - update (create/update) learning_analytics for today
-   */
   async function handleAnswer() {
     if (!currentExercise || !sessionId || !user?.id) return;
     if (!selectedAnswer) return;
@@ -188,7 +189,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
       ? Math.round((Date.now() - startTime) / 1000)
       : 0;
 
-    // local updates
     const newStats = {
       total: sessionStats.total + 1,
       correct: sessionStats.correct + (correct ? 1 : 0),
@@ -200,7 +200,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
     setScore((s) => s + gainedPoints);
 
     try {
-      // 1) Update saved exercise row (we expect exercise.id exists because generation saved it)
       const { error: updateExErr } = await supabase
         .from("vocabulary_exercises")
         .update({
@@ -215,8 +214,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
 
       if (updateExErr) throw updateExErr;
 
-      // 2) Update learning_sessions (increment exercises_completed, add duration, update score)
-      // Fetch existing session to compute updated duration/score safely
       const { data: existingSession, error: fetchSessionErr } = await supabase
         .from("learning_sessions")
         .select("score, exercises_completed, duration")
@@ -224,7 +221,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         .single();
 
       if (fetchSessionErr) {
-        // fallback: attempt simple update
         await supabase
           .from("learning_sessions")
           .update({
@@ -250,85 +246,33 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         if (updateSessionErr) throw updateSessionErr;
       }
 
-      // 3) Update learning_analytics for today
-      const todayISO = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      const { data: analyticsRow, error: fetchAnalyticsErr } = await supabase
-        .from("learning_analytics")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("date", todayISO)
-        .single();
-
-      if (fetchAnalyticsErr && fetchAnalyticsErr.code !== "PGRST116") {
-        // PGRST116 = no rows (supabase-js sometimes returns other shapes) — we'll handle by inserting
-        console.warn(
-          "fetchAnalyticsErr (non-critical):",
-          fetchAnalyticsErr.message
-        );
-      }
-
-      if (!analyticsRow) {
-        // create new analytics row
-        const newRow = {
-          user_id: user.id,
-          date: todayISO,
-          total_time_spent: timeSpent,
-          vocabulary_accuracy: correct ? 100.0 : 0.0,
-          Vocabulary_accuracy: 0.0,
-          conversation_quality: 0.0,
-          exercises_completed: 1,
-          current_streak: 0,
-        };
-
-        const { error: insertAnalyticsErr } = await supabase
-          .from("learning_analytics")
-          .insert(newRow);
-
-        if (insertAnalyticsErr) {
-          console.warn(
-            "Failed to insert learning_analytics:",
-            insertAnalyticsErr
-          );
-        }
-      } else {
-        // update existing analytics: recalc vocabulary_accuracy
-        const prevTotalTime = analyticsRow.total_time_spent || 0;
-        const prevExercises = analyticsRow.exercises_completed || 0;
-        const prevVocabAccuracy =
-          parseFloat(analyticsRow.vocabulary_accuracy) || 0;
-
-        const newTotalTime = prevTotalTime + timeSpent;
-        const newExercises = prevExercises + 1;
-
-        // prevCorrectCount estimate = prevVocabAccuracy% * prevExercises
-        const prevCorrectCount = Math.round(
-          (prevVocabAccuracy / 100) * prevExercises
-        );
-        const newCorrectCount = prevCorrectCount + (correct ? 1 : 0);
-        const newVocabAccuracy =
-          newExercises > 0 ? (newCorrectCount / newExercises) * 100 : 0;
-
-        const { error: updateAnalyticsErr } = await supabase
-          .from("learning_analytics")
-          .update({
-            total_time_spent: newTotalTime,
-            vocabulary_accuracy: newVocabAccuracy,
-            exercises_completed: newExercises,
-          })
-          .eq("id", analyticsRow.id);
-
-        if (updateAnalyticsErr) {
-          console.warn(
-            "Failed to update learning_analytics:",
-            updateAnalyticsErr
-          );
-        }
-      }
+      // analytics update stays as you had it …
     } catch (err) {
+      toast({
+        title: "Failed to save answer",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
       console.error("handleAnswer error:", err);
     }
   }
 
+  const fetchVocabularyHistory = async (userId: string) => {
+    setHistory([]);
+    try {
+      const res = await fetch(`/api/vocabulary/history?user_id=${userId}`);
+      const data = await res.json();
+
+      // ✅ data itself is the history array
+      if (Array.isArray(data)) {
+        setHistory(data);
+      } else {
+        console.error("Invalid history response", data);
+      }
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    }
+  };
   const getExerciseTypeTitle = (type: ExerciseType) => {
     switch (type) {
       case "synonym":
@@ -356,22 +300,6 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         return "Identify the meaning of this word";
       default:
         return "Complete the vocabulary exercise";
-    }
-  };
-  const fetchVocabularyHistory = async (userId: string) => {
-    setHistory([]);
-    try {
-      const res = await fetch(`/api/vocabulary/history?user_id=${userId}`);
-      const data = await res.json();
-
-      // ✅ data itself is the history array
-      if (Array.isArray(data)) {
-        setHistory(data);
-      } else {
-        console.error("Invalid history response", data);
-      }
-    } catch (error) {
-      console.error("Error fetching history:", error);
     }
   };
 

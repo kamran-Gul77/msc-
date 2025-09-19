@@ -45,6 +45,18 @@ user_id uuid,
 CONSTRAINT grammar_exercises_pkey PRIMARY KEY (id),
 CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
 );
+CREATE TABLE public.grammar_pool (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+sentence text NOT NULL,
+exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['correction'::text, 'fill_blank'::text, 'quiz'::text])),
+correct_answer text NOT NULL,
+grammar_rule text,
+feedback text,
+options jsonb DEFAULT '[]'::jsonb,
+blank_position integer,
+CONSTRAINT grammar_pool_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.learning_analytics (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
 user_id uuid NOT NULL,
@@ -98,18 +110,20 @@ created_at timestamp with time zone DEFAULT now(),
 user_id uuid,
 options jsonb DEFAULT '[]'::jsonb,
 example_sentence text,
+proficiency_level text,
+pool_id uuid,
 CONSTRAINT vocabulary_exercises_pkey PRIMARY KEY (id),
-CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id),
+CONSTRAINT vocabulary_exercises_pool_id_fkey FOREIGN KEY (pool_id) REFERENCES public.vocabulary_pool(id)
 );
 CREATE TABLE public.vocabulary_pool (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
-proficiency_level text NOT NULL,
-word text NOT NULL,
+word text NOT NULL UNIQUE,
 exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['synonym'::text, 'antonym'::text, 'context'::text, 'recognition'::text])),
 correct_answer text NOT NULL,
 options jsonb DEFAULT '[]'::jsonb,
 example_sentence text,
+proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
 created_at timestamp with time zone DEFAULT now(),
-used boolean DEFAULT false,
 CONSTRAINT vocabulary_pool_pkey PRIMARY KEY (id)
 );
