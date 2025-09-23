@@ -47,17 +47,15 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#181818]">
       <Navigation />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <Mail className="h-16 w-16 text-primary mx-auto mb-6" />
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Contact Us
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <Mail className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
+            <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Have questions about linguaAi? We are here to help you on your
               learning journey.
             </p>
@@ -66,52 +64,46 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contact Information */}
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <MessageCircle className="h-5 w-5 text-yellow-400" />
                     Get in Touch
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     We would love to hear from you. Send us a message and we
                     will respond as soon as possible.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-primary" />
+                    <Mail className="h-5 w-5 text-yellow-400" />
                     <div>
-                      <p className="font-medium text-foreground">Email</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-white">Email</p>
+                      <p className="text-sm text-gray-400">
                         support@linguaAi.com
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-primary" />
+                    <Phone className="h-5 w-5 text-yellow-400" />
                     <div>
-                      <p className="font-medium text-foreground">Phone</p>
-                      <p className="text-sm text-muted-foreground">
-                        +1 (555) 123-4567
-                      </p>
+                      <p className="font-medium text-white">Phone</p>
+                      <p className="text-sm text-gray-400">+1 (555) 123-4567</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-primary" />
+                    <Clock className="h-5 w-5 text-yellow-400" />
                     <div>
-                      <p className="font-medium text-foreground">
-                        Response Time
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Within 24 hours
-                      </p>
+                      <p className="font-medium text-white">Response Time</p>
+                      <p className="text-sm text-gray-400">Within 24 hours</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-primary" />
+                    <MapPin className="h-5 w-5 text-yellow-400" />
                     <div>
-                      <p className="font-medium text-foreground">Office</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-white">Office</p>
+                      <p className="text-sm text-gray-400">
                         123 Learning Street
                         <br />
                         Education City, EC 12345
@@ -121,36 +113,38 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle>Frequently Asked Questions</CardTitle>
+                  <CardTitle className="text-white">
+                    Frequently Asked Questions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">
+                    <h4 className="font-medium text-white mb-1">
                       How does the AI chatbot work?
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-400">
                       Our AI analyzes your responses and adapts lessons to your
                       skill level, providing personalized feedback and
                       recommendations.
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">
+                    <h4 className="font-medium text-white mb-1">
                       Is my data secure?
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-400">
                       Yes, we use industry-standard encryption and security
                       measures to protect your personal information and learning
                       data.
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">
+                    <h4 className="font-medium text-white mb-1">
                       Can I track my progress?
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-400">
                       Our platform provides detailed analytics on your learning
                       progress, strengths, and areas for improvement.
                     </p>
@@ -161,10 +155,12 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle>Send us a Message</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">
+                    Send us a Message
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
                     Fill out the form below and we will get back to you as soon
                     as possible.
                   </CardDescription>
@@ -173,7 +169,9 @@ export default function ContactPage() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
+                        <Label htmlFor="name" className="text-white">
+                          Full Name *
+                        </Label>
                         <Input
                           id="name"
                           placeholder="Enter your full name"
@@ -182,10 +180,13 @@ export default function ContactPage() {
                             handleInputChange("name", e.target.value)
                           }
                           required
+                          className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
+                        <Label htmlFor="email" className="text-white">
+                          Email Address *
+                        </Label>
                         <Input
                           id="email"
                           type="email"
@@ -195,35 +196,43 @@ export default function ContactPage() {
                             handleInputChange("email", e.target.value)
                           }
                           required
+                          className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="category" className="text-white">
+                        Category
+                      </Label>
                       <Select
                         onValueChange={(value) =>
                           handleInputChange("category", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#181818] border border-[#303030] text-white">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="general">
+                        <SelectContent className="bg-[#212121] text-white">
+                          <SelectItem value="general" className="text-white">
                             General Inquiry
                           </SelectItem>
-                          <SelectItem value="technical">
+                          <SelectItem value="technical" className="text-white">
                             Technical Support
                           </SelectItem>
-                          <SelectItem value="billing">
+                          <SelectItem value="billing" className="text-white">
                             Billing Question
                           </SelectItem>
-                          <SelectItem value="feature">
+                          <SelectItem value="feature" className="text-white">
                             Feature Request
                           </SelectItem>
-                          <SelectItem value="bug">Bug Report</SelectItem>
-                          <SelectItem value="partnership">
+                          <SelectItem value="bug" className="text-white">
+                            Bug Report
+                          </SelectItem>
+                          <SelectItem
+                            value="partnership"
+                            className="text-white"
+                          >
                             Partnership
                           </SelectItem>
                         </SelectContent>
@@ -231,7 +240,9 @@ export default function ContactPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="subject">Subject *</Label>
+                      <Label htmlFor="subject" className="text-white">
+                        Subject *
+                      </Label>
                       <Input
                         id="subject"
                         placeholder="Brief description of your inquiry"
@@ -240,11 +251,14 @@ export default function ContactPage() {
                           handleInputChange("subject", e.target.value)
                         }
                         required
+                        className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="message">Message *</Label>
+                      <Label htmlFor="message" className="text-white">
+                        Message *
+                      </Label>
                       <Textarea
                         id="message"
                         placeholder="Please provide details about your inquiry..."
@@ -254,11 +268,12 @@ export default function ContactPage() {
                           handleInputChange("message", e.target.value)
                         }
                         required
+                        className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                       />
                     </div>
 
-                    <div className="bg-muted rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground">
+                    <div className="bg-[#181818] rounded-lg p-4 border border-[#303030]">
+                      <p className="text-sm text-gray-400">
                         <strong>Note:</strong> For technical issues, please
                         include details about your device, browser, and any
                         error messages you encountered. This helps us provide
@@ -266,7 +281,11 @@ export default function ContactPage() {
                       </p>
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full bg-[#303030] hover:bg-[#212121] text-white border border-[#181818]"
+                    >
                       <Send className="mr-2 h-4 w-4" />
                       Send Message
                     </Button>

@@ -5,58 +5,58 @@ import { Shield, AlertTriangle, Lock, Eye, UserCheck } from "lucide-react";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#121212]">
       <Navigation />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <Shield className="h-16 w-16 text-primary mx-auto mb-6" />
-            <h1 className="text-4xl font-bold text-foreground mb-4">
+            <Shield className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
+            <h1 className="text-4xl font-bold text-white mb-4">
               Privacy Policy
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-gray-400">
               Your privacy and data security are our top priorities
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Last updated: December 2024
             </p>
           </div>
 
           <div className="space-y-8">
-            <Card>
+            <Card className="bg-[#1E1E1E] border border-[#303030]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <UserCheck className="h-5 w-5 text-yellow-400" />
                   Information We Collect
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-gray-300">
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Account Information
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     We collect basic account information such as your email
                     address, username, and learning preferences to provide
                     personalized learning experiences.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Learning Data
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     We track your learning progress, quiz results, and
                     conversation history to improve our AI recommendations and
                     track your improvement over time.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Usage Analytics
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     We collect anonymous usage data to understand how our
                     platform is used and to improve the learning experience for
                     all users.
@@ -65,38 +65,36 @@ export default function PrivacyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E1E1E] border border-[#303030]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Lock className="h-5 w-5 text-yellow-400" />
                   How We Protect Your Data
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-gray-300">
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
-                    Encryption
-                  </h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-semibold text-white mb-2">Encryption</h3>
+                  <p>
                     All data is encrypted in transit and at rest using
                     industry-standard encryption protocols.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Access Controls
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     We implement strict access controls to ensure only
                     authorized personnel can access user data, and only when
                     necessary for platform operations.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Regular Security Audits
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     Our systems undergo regular security audits and penetration
                     testing to identify and address potential vulnerabilities.
                   </p>
@@ -104,45 +102,45 @@ export default function PrivacyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E1E1E] border border-[#303030]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Eye className="h-5 w-5 text-yellow-400" />
                   How We Use Your Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3 text-muted-foreground">
+              <CardContent className="space-y-4 text-gray-300">
+                <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
+                    <span className="text-yellow-400">•</span>
                     <span>
                       Provide personalized learning recommendations and adapt
                       content to your skill level
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
+                    <span className="text-yellow-400">•</span>
                     <span>
                       Track your learning progress and provide detailed
                       analytics on your improvement
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
+                    <span className="text-yellow-400">•</span>
                     <span>
                       Improve our AI algorithms and learning content based on
                       aggregated user data
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
+                    <span className="text-yellow-400">•</span>
                     <span>
                       Send you important updates about your account and new
                       features (you can opt out anytime)
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
+                    <span className="text-yellow-400">•</span>
                     <span>
                       Provide customer support and respond to your inquiries
                     </span>
@@ -151,24 +149,24 @@ export default function PrivacyPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-destructive/20 bg-destructive/5">
+            <Card className="bg-[#2A1A1A] border border-red-600/40">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
+                <CardTitle className="flex items-center gap-2 text-red-400">
                   <AlertTriangle className="h-5 w-5" />
                   Prohibited Content and Usage
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-foreground font-medium">
+              <CardContent className="space-y-4 text-gray-300">
+                <p className="font-medium text-white">
                   To maintain a safe and educational environment, the following
                   content and activities are strictly prohibited:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2">
+                    <h4 className="font-semibold text-white mb-2">
                       Prohibited Content:
                     </h4>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
+                    <ul className="space-y-1 text-sm text-gray-400">
                       <li>• Illegal activities or content</li>
                       <li>• Hate speech or discriminatory language</li>
                       <li>• Adult or inappropriate content</li>
@@ -178,10 +176,10 @@ export default function PrivacyPage() {
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2">
+                    <h4 className="font-semibold text-white mb-2">
                       Prohibited Activities:
                     </h4>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
+                    <ul className="space-y-1 text-sm text-gray-400">
                       <li>• Attempting to hack or exploit the system</li>
                       <li>• Creating multiple fake accounts</li>
                       <li>• Sharing account credentials</li>
@@ -191,8 +189,8 @@ export default function PrivacyPage() {
                     </ul>
                   </div>
                 </div>
-                <div className="bg-background rounded-lg p-4 mt-4">
-                  <p className="text-sm text-muted-foreground">
+                <div className="bg-[#1E1E1E] rounded-lg p-4 mt-4">
+                  <p className="text-sm text-gray-400">
                     <strong>Note:</strong> Our AI chatbot is designed for
                     educational purposes only. Any attempts to use it for
                     illegal activities, generate harmful content, or bypass
@@ -203,35 +201,37 @@ export default function PrivacyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E1E1E] border border-[#303030]">
               <CardHeader>
-                <CardTitle>Your Rights and Choices</CardTitle>
+                <CardTitle className="text-white">
+                  Your Rights and Choices
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-gray-300">
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Data Access and Portability
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     You can request a copy of all your personal data and
                     learning history at any time through your account settings.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Data Deletion
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     You can delete your account and all associated data at any
                     time. Some anonymized learning data may be retained for
                     research purposes.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
+                  <h3 className="font-semibold text-white mb-2">
                     Communication Preferences
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p>
                     You can control what types of emails you receive from us and
                     opt out of non-essential communications.
                   </p>
@@ -239,12 +239,12 @@ export default function PrivacyPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#1E1E1E] border border-[#303030]">
               <CardHeader>
-                <CardTitle>Contact Us</CardTitle>
+                <CardTitle className="text-white">Contact Us</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
+              <CardContent className="text-gray-300">
+                <p className="mb-4">
                   If you have any questions about this Privacy Policy or how we
                   handle your data, please contact us:
                 </p>

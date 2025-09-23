@@ -85,17 +85,17 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#181818]">
       <Navigation />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <MessageSquare className="h-16 w-16 text-primary mx-auto mb-6" />
-            <h1 className="text-4xl font-bold text-foreground mb-4">
+            <MessageSquare className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
+            <h1 className="text-4xl font-bold text-white mb-4">
               Share Your Feedback
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Your experience matters to us. Help us improve linguaAi by sharing
               your thoughts and suggestions.
             </p>
@@ -104,21 +104,21 @@ export default function FeedbackPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Feedback Stats */}
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <TrendingUp className="h-5 w-5 text-yellow-400" />
                     Community Impact
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     See how your feedback contributes to our community
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">
+                      <Users className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm font-medium text-white">
                         Active Learners
                       </span>
                     </div>
@@ -127,7 +127,7 @@ export default function FeedbackPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium text-white">
                         Average Rating
                       </span>
                     </div>
@@ -135,8 +135,8 @@ export default function FeedbackPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <ThumbsUp className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">
+                      <ThumbsUp className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm font-medium text-white">
                         Satisfaction Rate
                       </span>
                     </div>
@@ -144,8 +144,8 @@ export default function FeedbackPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">
+                      <Award className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm font-medium text-white">
                         Features Added
                       </span>
                     </div>
@@ -154,68 +154,50 @@ export default function FeedbackPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle>Recent Improvements</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">
+                    Recent Improvements
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
                     Features added based on user feedback
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Enhanced Grammar Explanations
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Added detailed rule explanations
-                      </p>
+                  {[
+                    "Enhanced Grammar Explanations",
+                    "Progress Analytics",
+                    "Mobile Optimization",
+                    "Conversation Scenarios",
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{item}</p>
+                        <p className="text-xs text-gray-400">
+                          {item === "Enhanced Grammar Explanations"
+                            ? "Added detailed rule explanations"
+                            : item === "Progress Analytics"
+                            ? "Visual learning progress tracking"
+                            : item === "Mobile Optimization"
+                            ? "Better mobile learning experience"
+                            : "More real-world practice situations"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Progress Analytics
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Visual learning progress tracking
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Mobile Optimization
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Better mobile learning experience
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Conversation Scenarios
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        More real-world practice situations
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>
 
             {/* Feedback Form */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
-                  <CardTitle>Tell Us About Your Experience</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">
+                    Tell Us About Your Experience
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
                     Your feedback helps us create a better learning experience
                     for everyone.
                   </CardDescription>
@@ -224,7 +206,9 @@ export default function FeedbackPage() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Name (Optional)</Label>
+                        <Label htmlFor="name" className="text-white">
+                          Name (Optional)
+                        </Label>
                         <Input
                           id="name"
                           placeholder="Your name"
@@ -232,10 +216,13 @@ export default function FeedbackPage() {
                           onChange={(e) =>
                             handleInputChange("name", e.target.value)
                           }
+                          className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email (Optional)</Label>
+                        <Label htmlFor="email" className="text-white">
+                          Email (Optional)
+                        </Label>
                         <Input
                           id="email"
                           type="email"
@@ -244,15 +231,16 @@ export default function FeedbackPage() {
                           onChange={(e) =>
                             handleInputChange("email", e.target.value)
                           }
+                          className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Overall Rating *</Label>
+                      <Label className="text-white">Overall Rating *</Label>
                       <div className="flex items-center gap-4">
                         <StarRating rating={rating} setRating={setRating} />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-gray-400">
                           {rating === 0 && "Please rate your experience"}
                           {rating === 1 && "Poor"}
                           {rating === 2 && "Fair"}
@@ -264,44 +252,42 @@ export default function FeedbackPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="category">Feedback Category</Label>
+                      <Label htmlFor="category" className="text-white">
+                        Feedback Category
+                      </Label>
                       <Select
                         onValueChange={(value) =>
                           handleInputChange("category", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#181818] border border-[#303030] text-white">
                           <SelectValue placeholder="What aspect would you like to comment on?" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="overall">
-                            Overall Experience
-                          </SelectItem>
-                          <SelectItem value="vocabulary">
-                            Vocabulary Learning
-                          </SelectItem>
-                          <SelectItem value="grammar">
-                            Grammar Practice
-                          </SelectItem>
-                          <SelectItem value="conversation">
-                            Conversation Practice
-                          </SelectItem>
-                          <SelectItem value="ui">User Interface</SelectItem>
-                          <SelectItem value="performance">
-                            Performance & Speed
-                          </SelectItem>
-                          <SelectItem value="mobile">
-                            Mobile Experience
-                          </SelectItem>
-                          <SelectItem value="progress">
-                            Progress Tracking
-                          </SelectItem>
+                        <SelectContent className="bg-[#212121] text-white">
+                          {[
+                            "Overall Experience",
+                            "Vocabulary Learning",
+                            "Grammar Practice",
+                            "Conversation Practice",
+                            "User Interface",
+                            "Performance & Speed",
+                            "Mobile Experience",
+                            "Progress Tracking",
+                          ].map((item, idx) => (
+                            <SelectItem
+                              key={idx}
+                              value={item.toLowerCase().replace(/ /g, "-")}
+                              className="text-white"
+                            >
+                              {item}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="experience">
+                      <Label htmlFor="experience" className="text-white">
                         What did you like most? *
                       </Label>
                       <Textarea
@@ -313,11 +299,14 @@ export default function FeedbackPage() {
                           handleInputChange("experience", e.target.value)
                         }
                         required
+                        className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="suggestion">How can we improve?</Label>
+                      <Label htmlFor="suggestion" className="text-white">
+                        How can we improve?
+                      </Label>
                       <Textarea
                         id="suggestion"
                         placeholder="Share your suggestions for making linguaAi even better..."
@@ -326,11 +315,12 @@ export default function FeedbackPage() {
                         onChange={(e) =>
                           handleInputChange("suggestion", e.target.value)
                         }
+                        className="bg-[#181818] border border-[#303030] text-white placeholder-gray-400"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="recommend">
+                      <Label htmlFor="recommend" className="text-white">
                         Would you recommend linguaAi?
                       </Label>
                       <Select
@@ -338,31 +328,31 @@ export default function FeedbackPage() {
                           handleInputChange("recommend", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-[#181818] border border-[#303030] text-white">
                           <SelectValue placeholder="Select your recommendation level" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="definitely">
-                            Definitely - I love it!
-                          </SelectItem>
-                          <SelectItem value="probably">
-                            Probably - It is quite good
-                          </SelectItem>
-                          <SelectItem value="maybe">
-                            Maybe - It has potential
-                          </SelectItem>
-                          <SelectItem value="probably-not">
-                            Probably not - Needs improvement
-                          </SelectItem>
-                          <SelectItem value="definitely-not">
-                            Definitely not - Major issues
-                          </SelectItem>
+                        <SelectContent className="bg-[#212121] text-white">
+                          {[
+                            "Definitely - I love it!",
+                            "Probably - It is quite good",
+                            "Maybe - It has potential",
+                            "Probably not - Needs improvement",
+                            "Definitely not - Major issues",
+                          ].map((item, idx) => (
+                            <SelectItem
+                              key={idx}
+                              value={item.toLowerCase().replace(/ /g, "-")}
+                              className="text-white"
+                            >
+                              {item}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="bg-muted rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground">
+                    <div className="bg-[#181818] rounded-lg p-4 border border-[#303030]">
+                      <p className="text-sm text-gray-400">
                         <strong>Privacy Note:</strong> Your feedback may be used
                         to improve our service. Personal information will be
                         kept confidential and used only for follow-up if you
@@ -373,10 +363,10 @@ export default function FeedbackPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full"
+                      className="w-full bg-[#303030] hover:bg-[#212121] text-white border border-[#181818]"
                       disabled={rating === 0}
                     >
-                      <MessageSquare className="mr-2 h-4 w-4" />
+                      <MessageSquare className="mr-2 h-4 w-4 text-yellow-400" />
                       Submit Feedback
                     </Button>
                   </form>
