@@ -1,17 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/components/providers';
-import { Brain, BookOpen, MessageCircle, Target } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/components/providers";
+import { Brain, BookOpen, MessageCircle, Target } from "lucide-react";
 
 export function AuthPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupMessage, setSignupMessage] = useState("");
   const { signIn, signUp } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -20,7 +27,7 @@ export function AuthPage() {
     try {
       await signIn(email, password);
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error("Sign in error:", error);
     } finally {
       setLoading(false);
     }
@@ -31,8 +38,14 @@ export function AuthPage() {
     setLoading(true);
     try {
       await signUp(email, password);
+      // ✅ Show confirmation message after successful signup
+      setSignupMessage(
+        "We've sent a confirmation email. Please check your inbox before logging in."
+      );
+      setEmail("");
+      setPassword("");
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error("Sign up error:", error);
     } finally {
       setLoading(false);
     }
@@ -54,8 +67,9 @@ export function AuthPage() {
               Master English with AI-Powered Learning
             </h2>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Experience personalized vocabulary, grammar, and conversation practice 
-              tailored to your learning level with advanced AI technology.
+              Experience personalized vocabulary, grammar, and conversation
+              practice tailored to your learning level with advanced AI
+              technology.
             </p>
           </div>
 
@@ -65,8 +79,12 @@ export function AuthPage() {
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Vocabulary Training</h3>
-                <p className="text-gray-600">Dynamic exercises for synonyms, antonyms, and context usage</p>
+                <h3 className="font-semibold text-gray-900">
+                  Vocabulary Training
+                </h3>
+                <p className="text-gray-600">
+                  Dynamic exercises for synonyms, antonyms, and context usage
+                </p>
               </div>
             </div>
 
@@ -75,8 +93,12 @@ export function AuthPage() {
                 <Target className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Grammar Practice</h3>
-                <p className="text-gray-600">Real-time corrections and rule-based learning</p>
+                <h3 className="font-semibold text-gray-900">
+                  Grammar Practice
+                </h3>
+                <p className="text-gray-600">
+                  Real-time corrections and rule-based learning
+                </p>
               </div>
             </div>
 
@@ -85,8 +107,12 @@ export function AuthPage() {
                 <MessageCircle className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">AI Conversations</h3>
-                <p className="text-gray-600">Interactive dialogues and real-world scenarios</p>
+                <h3 className="font-semibold text-gray-900">
+                  AI Conversations
+                </h3>
+                <p className="text-gray-600">
+                  Interactive dialogues and real-world scenarios
+                </p>
               </div>
             </div>
           </div>
@@ -98,7 +124,9 @@ export function AuthPage() {
             <div className="flex justify-center mb-4 lg:hidden">
               <Brain className="h-8 w-8 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl font-bold">Welcome to LinguaAI</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Welcome to LinguaAI
+            </CardTitle>
             <CardDescription>
               Sign in to continue your English learning journey
             </CardDescription>
@@ -109,65 +137,64 @@ export function AuthPage() {
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     disabled={loading}
                   >
-                    {loading ? 'Signing In...' : 'Sign In'}
+                    {loading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     disabled={loading}
                   >
-                    {loading ? 'Creating Account...' : 'Create Account'}
+                    {loading ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
+
+                {/* ✅ Show confirmation message */}
+                {signupMessage && (
+                  <p className="mt-4 text-sm text-green-600 text-center">
+                    {signupMessage}
+                  </p>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

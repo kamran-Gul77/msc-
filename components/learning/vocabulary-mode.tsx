@@ -308,7 +308,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Generating personalized exercise...</p>
         </div>
       </div>
@@ -319,40 +319,45 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        {/* Exercises */}
+        <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
-            <BookOpen className="h-6 w-6 mx-auto mb-2" />
+            <BookOpen className="h-6 w-6 mx-auto mb-2 text-[#bb86fc]" />
             <p className="text-2xl font-bold">{sessionStats.total}</p>
-            <p className="text-blue-100 text-sm">Exercises</p>
+            <p className="text-sm text-gray-400">Exercises</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+        {/* Correct */}
+        <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
-            <CheckCircle className="h-6 w-6 mx-auto mb-2" />
+            <CheckCircle className="h-6 w-6 mx-auto mb-2 text-[#03dac6]" />
             <p className="text-2xl font-bold">{sessionStats.correct}</p>
-            <p className="text-green-100 text-sm">Correct</p>
+            <p className="text-sm text-gray-400">Correct</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        {/* Points */}
+        <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
-            <Star className="h-6 w-6 mx-auto mb-2" />
+            <Star className="h-6 w-6 mx-auto mb-2 text-[#ffb300]" />
             <p className="text-2xl font-bold">{score}</p>
-            <p className="text-purple-100 text-sm">Points</p>
+            <p className="text-sm text-gray-400">Points</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+        {/* Time */}
+        <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
-            <Clock className="h-6 w-6 mx-auto mb-2" />
+            <Clock className="h-6 w-6 mx-auto mb-2 text-[#ff5252]" />
             <p className="text-2xl font-bold">
               {Math.round(sessionStats.timeSpent / 60)}m
             </p>
-            <p className="text-orange-100 text-sm">Time</p>
+            <p className="text-sm text-gray-400">Time</p>
           </CardContent>
         </Card>
       </div>
+
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
@@ -360,269 +365,285 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
             setShowHistory((prevState) => {
               const newState = !prevState;
               if (newState) {
-                fetchVocabularyHistory(user?.id as string); // pass current user id
+                fetchVocabularyHistory(user?.id as string);
               }
               return newState;
             });
           }}
-          className="flex items-center space-x-2"
+          className="px-8 mt-6 py-4 hover:text-white bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
         >
           <span>{showHistory ? <Eye /> : <EyeOff />}</span>
           <span>{showHistory ? "Close History" : "View History"}</span>
         </Button>
       </div>
-
       {showHistory && (
-        <Card>
+        <Card className="bg-[#181818] text-white border border-[#303030]">
           <CardHeader>
-            <CardTitle>Vocabulary Exercise History</CardTitle>
+            <CardTitle className="text-lg font-semibold text-white">
+              Vocabulary Exercise History
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {history.length === 0 && <p>No past vocabulary exercises found.</p>}
+            {history.length === 0 && (
+              <p className="text-gray-400">
+                No past vocabulary exercises found.
+              </p>
+            )}
             <ul className="space-y-2">
-              {history.map((ex) => (
-                <li key={ex.id} className="p-3 rounded border border-gray-300">
-                  <p>
-                    <strong>Word:</strong> {ex.word}
-                  </p>
-                  <p>
-                    <strong>Exercise Type:</strong> {ex.exercise_type}
-                  </p>
-                  <p>
-                    <strong>Your Answer:</strong>{" "}
-                    {ex.user_answer ? ex.user_answer : <em>Not answered</em>}
-                  </p>
-                  {!ex.is_correct && ex.user_answer && (
+              {history.map((ex) => {
+                const answered =
+                  ex.user_answer !== null && ex.user_answer !== "";
+                const correct = ex.is_correct && answered;
+
+                return (
+                  <li
+                    key={ex.id}
+                    className={`p-3 rounded  bg-[#212121] 
+                    `}
+                  >
+                    {/* Word */}
                     <p>
-                      <strong>Correct Answer:</strong> {ex.correct_answer}
+                      <strong className="text-white">Word:</strong> {ex.word}
                     </p>
-                  )}
-                  {ex.example_sentence && (
-                    <p className="text-sm text-gray-700 mt-1">
-                      <strong>Example:</strong> {ex.example_sentence}
+
+                    {/* Exercise Type */}
+                    <p>
+                      <strong className="text-white">Exercise Type:</strong>{" "}
+                      {ex.exercise_type}
                     </p>
-                  )}
-                  <p className="text-xs text-gray-500">
-                    {new Date(ex.created_at || "").toLocaleString()}
-                  </p>
-                </li>
-              ))}
+
+                    {/* User Answer */}
+                    <p>
+                      <strong className="text-white">Your Answer:</strong>{" "}
+                      {answered ? (
+                        <span
+                          className={`font-semibold ${
+                            correct ? "text-green-400" : "text-red-400"
+                          }`}
+                        >
+                          {ex.user_answer}
+                        </span>
+                      ) : (
+                        <em className="text-gray-400">Not answered</em>
+                      )}
+                    </p>
+
+                    {/* Correct Answer if wrong */}
+                    {!correct && answered && (
+                      <p>
+                        <strong className="text-white">Correct Answer:</strong>{" "}
+                        <span className="text-green-400 font-semibold">
+                          {ex.correct_answer}
+                        </span>
+                      </p>
+                    )}
+
+                    {/* Example sentence */}
+                    {ex.example_sentence && (
+                      <p className="text-sm text-gray-400 mt-1">
+                        <strong className="text-white">Example:</strong>{" "}
+                        {ex.example_sentence}
+                      </p>
+                    )}
+
+                    {/* Timestamp */}
+                    <p className="text-xs text-gray-500">
+                      {new Date(ex.created_at || "").toLocaleString()}
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>
       )}
 
-      {/* Accuracy Progress */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Session Accuracy</span>
-            <span className="text-sm font-bold">
-              {sessionStats.total > 0
-                ? Math.round((sessionStats.correct / sessionStats.total) * 100)
-                : 0}
-              %
-            </span>
-          </div>
-          <Progress
-            value={
-              sessionStats.total > 0
-                ? (sessionStats.correct / sessionStats.total) * 100
-                : 0
-            }
-            className="h-2"
-          />
-        </CardContent>
-      </Card>
+      {/* Starter */}
+      {showStarter ? (
+        <div className="text-center my-6">
+          <p className="text-2xl font-semibold text-purple-600 animate-pulse">
+            Get ready to level up your Vocabulary skills!
+          </p>
+          <p className="mt-4 text-lg text-gray-700">
+            You’re about to embark on a fun journey to master Vocabulary. Let’s
+            start the session!
+          </p>
+          <button
+            onClick={() => {
+              setShowStarter(false);
+              startNewSession();
+            }}
+            className="px-8 mt-6 py-4 bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
+          >
+            Start the Vocabulary Session!
+          </button>
+        </div>
+      ) : (
+        <div>
+          {currentExercise && (
+            <Card className="max-w-4xl mx-auto bg-[#181818] border border-[#303030] text-white">
+              <CardHeader className="text-center">
+                {/* Badge */}
+                <div className="flex justify-center mb-2">
+                  <Badge
+                    variant="outline"
+                    className="border-purple-500 text-purple-400 bg-[#212121]"
+                  >
+                    {getExerciseTypeTitle(currentExercise.exercise_type)}
+                  </Badge>
+                </div>
 
-      {/* Exercise Card */}
-      <div>
-        {showStarter ? (
-          <div>
-            <div className="text-center my-6">
-              <p className="text-2xl font-semibold text-blue-600 animate-pulse">
-                Get ready to level up your Vocabulary skills!
-              </p>
-              <p className="mt-4 text-lg text-gray-700">
-                You’re about to embark on a fun journey to master Vocabulary.
-                Let’s start the session!
-              </p>
-              <button
-                onClick={() => {
-                  setShowStarter(false);
-                  startNewSession();
-                }}
-                className="px-8 mt-6 py-4 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold rounded-lg shadow-xl hover:from-green-500 hover:to-blue-600 transform transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300"
-              >
-                Start the Vocabulary Session!
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            {currentExercise && (
-              <Card className="max-w-4xl mx-auto">
-                <CardHeader className="text-center">
-                  <div className="flex justify-center mb-2">
-                    <Badge variant="outline" className="mb-2">
-                      {getExerciseTypeTitle(currentExercise.exercise_type)}
-                    </Badge>
+                {/* Word */}
+                <CardTitle className="text-2xl text-white">
+                  {currentExercise.word}
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  {getExerciseDescription(currentExercise.exercise_type)}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                {/* Definition */}
+                {currentExercise.definition && (
+                  <div className="text-center p-4 bg-[#212121] rounded-lg border border-[#303030]">
+                    <p className="italic text-gray-300">
+                      {currentExercise.definition}
+                    </p>
                   </div>
-                  <CardTitle className="text-2xl">
-                    {currentExercise.word}
-                  </CardTitle>
-                  <CardDescription>
-                    {getExerciseDescription(currentExercise.exercise_type)}
-                  </CardDescription>
-                </CardHeader>
+                )}
 
-                <CardContent className="space-y-6">
-                  {/* Definition */}
-                  {currentExercise.definition && (
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-gray-700 italic">
-                        {currentExercise.definition}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Example Sentence */}
-                  {currentExercise.example_sentence && (
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <p className="text-gray-600">
-                        <strong>Example:</strong>{" "}
-                        {currentExercise.example_sentence}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Options */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentExercise.options.map((option, idx) => {
-                      const isCorrectOption =
-                        option === currentExercise.correct_answer;
-                      const isSelected = option === selectedAnswer;
-
-                      let btnClass = "";
-                      if (showResult) {
-                        if (isCorrectOption)
-                          btnClass =
-                            "bg-green-100 border-green-500 text-green-700";
-                        else if (isSelected && !isCorrectOption)
-                          btnClass = "bg-red-100 border-red-500 text-red-700";
-                        else btnClass = "opacity-60";
-                      } else {
-                        if (isSelected) btnClass = "bg-blue-600 text-white";
-                      }
-
-                      return (
-                        <Button
-                          key={idx}
-                          variant={isSelected ? "default" : "outline"}
-                          className={`h-16 text-left justify-start ${btnClass}`}
-                          onClick={() =>
-                            !showResult && setSelectedAnswer(option)
-                          }
-                          disabled={showResult}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                showResult && isCorrectOption
-                                  ? "border-green-500 bg-green-500"
-                                  : showResult && isSelected && !isCorrectOption
-                                  ? "border-red-500 bg-red-500"
-                                  : isSelected
-                                  ? "border-white bg-white"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {showResult && isCorrectOption ? (
-                                <CheckCircle className="h-4 w-4 text-white" />
-                              ) : showResult &&
-                                isSelected &&
-                                !isCorrectOption ? (
-                                <XCircle className="h-4 w-4 text-white" />
-                              ) : isSelected ? (
-                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                              ) : null}
-                            </div>
-                            <span className="flex-1">{option}</span>
-                          </div>
-                        </Button>
-                      );
-                    })}
+                {/* Example */}
+                {currentExercise.example_sentence && (
+                  <div className="text-center p-4 bg-[#212121] rounded-lg border border-[#303030]">
+                    <p className="text-gray-300">
+                      <strong className="text-white">Example:</strong>{" "}
+                      {currentExercise.example_sentence}
+                    </p>
                   </div>
+                )}
 
-                  {/* Result Feedback */}
-                  {showResult && (
-                    <div
-                      className={`p-4 rounded-lg text-center ${
-                        isCorrect
-                          ? "bg-green-50 border border-green-200"
-                          : "bg-red-50 border border-red-200"
-                      }`}
-                    >
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        {isCorrect ? (
-                          <CheckCircle className="h-6 w-6 text-green-600" />
-                        ) : (
-                          <XCircle className="h-6 w-6 text-red-600" />
-                        )}
-                        <span
-                          className={`font-semibold ${
-                            isCorrect ? "text-green-700" : "text-red-700"
-                          }`}
-                        >
-                          {isCorrect ? "Correct!" : "Incorrect"}
-                        </span>
-                      </div>
-                      {!isCorrect && (
-                        <p className="text-red-600">
-                          The correct answer is:{" "}
-                          <strong>{currentExercise.correct_answer}</strong>
-                        </p>
-                      )}
-                    </div>
-                  )}
+                {/* Options */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {currentExercise.options.map((option, idx) => {
+                    const isCorrectOption =
+                      option === currentExercise.correct_answer;
+                    const isSelected = option === selectedAnswer;
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-center space-x-4">
-                    {!showResult ? (
+                    let btnClass = "";
+                    if (showResult) {
+                      if (isCorrectOption)
+                        btnClass =
+                          "bg-green-900/30 border-green-500 text-green-400";
+                      else if (isSelected && !isCorrectOption)
+                        btnClass = "bg-red-900/30 border-red-500 text-red-400";
+                      else btnClass = "opacity-60";
+                    } else {
+                      if (isSelected)
+                        btnClass =
+                          "bg-gradient-to-r from-purple-600 to-pink-600 text-white";
+                    }
+
+                    return (
                       <Button
-                        onClick={handleAnswer}
-                        disabled={!selectedAnswer}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 min-w-32"
+                        key={idx}
+                        variant={isSelected ? "default" : "outline"}
+                        className={`h-auto min-h-16 text-left justify-start whitespace-normal break-words px-4 py-3 border border-[#303030] bg-[#212121] hover:bg-[#303030] ${btnClass}`}
+                        onClick={() => !showResult && setSelectedAnswer(option)}
+                        disabled={showResult}
                       >
-                        Submit Answer
-                      </Button>
-                    ) : (
-                      <div className="flex items-center gap-4">
-                        <Button
-                          onClick={() => {
-                            // refresh: fetch next exercise
-                            generateNewExercise();
-                          }}
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 min-w-32"
-                        >
-                          Next Exercise
-                        </Button>
+                        <div className="flex items-start space-x-3 w-full">
+                          {/* Circle / Icon */}
+                          <div
+                            className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-1 ${
+                              showResult && isCorrectOption
+                                ? "border-green-500 bg-green-500"
+                                : showResult && isSelected && !isCorrectOption
+                                ? "border-red-500 bg-red-500"
+                                : isSelected
+                                ? "border-purple-400 bg-purple-400"
+                                : "border-gray-500"
+                            }`}
+                          >
+                            {showResult && isCorrectOption ? (
+                              <CheckCircle className="h-4 w-4 text-white" />
+                            ) : showResult && isSelected && !isCorrectOption ? (
+                              <XCircle className="h-4 w-4 text-white" />
+                            ) : null}
+                          </div>
 
-                        <Button
-                          variant={"outline"}
-                          onClick={() => setShowStarter(true)}
-                        >
-                          Back
-                        </Button>
-                      </div>
+                          {/* Option Text */}
+                          <span className="flex-1 text-sm sm:text-base break-words">
+                            {option}
+                          </span>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                {/* Result Feedback */}
+                {showResult && (
+                  <div
+                    className={`p-4 rounded-lg text-center border ${
+                      isCorrect
+                        ? "bg-green-900/30 border-green-500 text-green-400"
+                        : "bg-red-900/30 border-red-500 text-red-400"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center space-x-2 mb-2">
+                      {isCorrect ? (
+                        <CheckCircle className="h-6 w-6 text-green-400" />
+                      ) : (
+                        <XCircle className="h-6 w-6 text-red-400" />
+                      )}
+                      <span className="font-semibold text-lg">
+                        {isCorrect ? "Correct!" : "Incorrect"}
+                      </span>
+                    </div>
+                    {!isCorrect && (
+                      <p>
+                        The correct answer is:{" "}
+                        <strong className="text-green-400">
+                          {currentExercise.correct_answer}
+                        </strong>
+                      </p>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-center flex-wrap gap-4">
+                  {!showResult ? (
+                    <Button
+                      onClick={handleAnswer}
+                      disabled={!selectedAnswer}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
+                    >
+                      Submit Answer
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={() => generateNewExercise()}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
+                      >
+                        Next Exercise
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowStarter(true)}
+                        className="border-purple-500 text-purple-400 hover:bg-[#212121]"
+                      >
+                        Back
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }

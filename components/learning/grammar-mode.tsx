@@ -362,13 +362,13 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         const parts = currentExercise.sentence.split("_____");
         return (
           <div className="space-y-4">
-            <div className="text-lg text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-lg text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
               {parts[0]}
-              <span className="inline-block mx-2 px-3 py-1 bg-white border-2 border-dashed border-blue-300 rounded min-w-20 text-center">
+              <span className="inline-block mx-2 px-3 py-1 bg-white border-2 border-dashed border-purple-400 rounded min-w-20 text-center">
                 <Input
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
-                  className="border-0 shadow-none p-0 text-center font-medium"
+                  className="border-0  shadow-none p-0 text-center font-medium text-purple-700"
                   placeholder="?"
                   disabled={showResult}
                 />
@@ -381,8 +381,8 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       case "correction":
         return (
           <div className="space-y-4">
-            <div className="text-lg text-center p-4 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-red-700 font-medium mb-2">
+            <div className="text-lg text-center p-4 bg-pink-50 rounded-lg border border-pink-300">
+              <p className="text-pink-700 font-medium mb-2">
                 Incorrect sentence:
               </p>
               <p className="text-gray-800">{currentExercise.sentence}</p>
@@ -392,7 +392,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 placeholder="Type the corrected sentence here..."
-                className="min-h-20"
+                className="min-h-20 border-pink-300 focus:border-pink-500 focus:ring-pink-500 text-black"
                 disabled={showResult}
               />
             </div>
@@ -402,26 +402,33 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       case "quiz":
         return (
           <div className="space-y-4">
-            <div className="text-lg text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-blue-700 font-medium mb-2">Question:</p>
-              <p className="text-gray-800">{currentExercise.sentence}</p>
+            {/* Question Box */}
+            <div className="text-lg text-center p-4 bg-[#181818] rounded-lg border border-[#303030]">
+              <p className="text-yellow-400 font-medium mb-2">Question:</p>
+              <p className="text-gray-200 break-words">
+                {currentExercise.sentence}
+              </p>
             </div>
+
+            {/* Options or Input */}
             {currentExercise.options ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {currentExercise.options.map((option, index) => (
                   <Button
                     key={index}
                     variant={userAnswer === option ? "default" : "outline"}
-                    className={`h-12 text-left justify-start ${
-                      showResult
-                        ? option === currentExercise.correct_answer
-                          ? "bg-green-100 border-green-500 text-green-700"
-                          : userAnswer === option &&
-                            option !== currentExercise.correct_answer
-                          ? "bg-red-100 border-red-500 text-red-700"
-                          : "opacity-60"
-                        : ""
-                    }`}
+                    className={`h-auto min-h-12 w-full text-left justify-start hover:text-white px-4 py-3 rounded-lg 
+            whitespace-normal break-words transition-all duration-200
+            ${
+              showResult
+                ? option === currentExercise.correct_answer
+                  ? "bg-green-900 border-green-400 text-green-300"
+                  : userAnswer === option &&
+                    option !== currentExercise.correct_answer
+                  ? "bg-red-900 border-red-400 text-red-300"
+                  : "opacity-60 bg-[#181818] border-[#303030] text-gray-400"
+                : "bg-[#212121] border-[#303030] hover:bg-[#181818] text-gray-200"
+            }`}
                     onClick={() => !showResult && setUserAnswer(option)}
                     disabled={showResult}
                   >
@@ -434,6 +441,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 placeholder="Type your answer..."
+                className="bg-[#181818] border border-[#303030] text-gray-200 placeholder-gray-500 focus:border-yellow-400 focus:ring-yellow-400"
                 disabled={showResult}
               />
             )}
@@ -449,69 +457,72 @@ export function GrammarMode({ profile }: GrammarModeProps) {
     <div className="space-y-6">
       {/* Stats Header */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
-            <BookOpen className="h-6 w-6 mx-auto mb-2" />
+            <BookOpen className="h-6 w-6 text-gray-300 mx-auto mb-2" />
             <p className="text-2xl font-bold">{sessionStats.total}</p>
-            <p className="text-blue-100 text-sm">Exercises</p>
+            <p className="text-sm text-gray-400">Exercises</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
-            <CheckCircle className="h-6 w-6 mx-auto mb-2" />
+            <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{sessionStats.correct}</p>
-            <p className="text-green-100 text-sm">Correct</p>
+            <p className="text-sm text-gray-400">Correct</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
-            <Star className="h-6 w-6 mx-auto mb-2" />
+            <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">{score}</p>
-            <p className="text-purple-100 text-sm">Points</p>
+            <p className="text-sm text-gray-400">Points</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
-            <Clock className="h-6 w-6 mx-auto mb-2" />
+            <Clock className="h-6 w-6 text-blue-400 mx-auto mb-2" />
             <p className="text-2xl font-bold">
               {Math.round(sessionStats.timeSpent / 60)}m
             </p>
-            <p className="text-orange-100 text-sm">Time</p>
+            <p className="text-sm text-gray-400">Time</p>
           </CardContent>
         </Card>
       </div>
+
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
+          className="px-8 mt-6 hover:text-white py-4 bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
           onClick={() => {
-            // Toggle the history visibility
             setShowHistory((prevState) => {
               const newState = !prevState;
-              if (newState) {
-                // Fetch history only when opening the history
-                fetchHistory();
-              }
+              if (newState) fetchHistory();
               return newState;
             });
           }}
-          className="flex items-center space-x-2"
         >
-          <span>{showHistory ? <Eye /> : <EyeOff />}</span>
-          <span>{showHistory ? "Close History" : "View History"}</span>
+          {showHistory ? <Eye /> : <EyeOff />}
+          <span className="ml-2">
+            {showHistory ? "Close History" : "View History"}
+          </span>
         </Button>
       </div>
 
       {/* History Section */}
       {showHistory && (
-        <Card>
+        <Card className="bg-[#181818] border border-[#303030] text-white">
           <CardHeader>
-            <CardTitle>Exercise History</CardTitle>
+            <CardTitle className="text-lg font-semibold text-white">
+              Exercise History
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {history.length === 0 && <p>No past exercises found.</p>}
+            {history.length === 0 && (
+              <p className="text-gray-400">No past exercises found.</p>
+            )}
             <ul className="space-y-2">
               {history.map((ex) => {
                 const answered =
@@ -521,27 +532,46 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 return (
                   <li
                     key={ex.id}
-                    className={`p-3 rounded border ${
-                      correct
-                        ? "border-green-400 bg-green-50"
-                        : "border-red-400 bg-red-50"
+                    className={`p-3 rounded  bg-[#212121] ${
+                      correct ? "border-green-400" : "border-red-400"
                     }`}
                   >
+                    {/* Question */}
                     <p>
-                      <strong>Q:</strong> {ex.sentence}
+                      <strong className="text-white">Q:</strong> {ex.sentence}
                     </p>
+
+                    {/* User Answer */}
                     <p>
-                      <strong>Your Answer:</strong>{" "}
-                      {answered ? ex.user_answer : <em>Not answered</em>}
+                      <strong className="text-white">Your Answer:</strong>{" "}
+                      {answered ? (
+                        <span
+                          className={`font-semibold ${
+                            correct ? "text-green-400" : "text-red-400"
+                          }`}
+                        >
+                          {ex.user_answer}
+                        </span>
+                      ) : (
+                        <em className="text-gray-400">Not answered</em>
+                      )}
                     </p>
+
+                    {/* Correct Answer (only if user is wrong) */}
                     {!correct && answered && (
                       <p>
-                        <strong>Correct:</strong> {ex.correct_answer}
+                        <strong className="text-white">Correct:</strong>{" "}
+                        <span className="text-green-400 font-semibold">
+                          {ex.correct_answer}
+                        </span>
                       </p>
                     )}
+
+                    {/* Feedback */}
                     {ex.feedback && (
-                      <p className="text-sm text-gray-700 mt-1">
-                        <strong>Explanation:</strong> {ex.feedback}
+                      <p className="text-sm text-gray-400 mt-1">
+                        <strong className="text-white">Explanation:</strong>{" "}
+                        {ex.feedback}
                       </p>
                     )}
                   </li>
@@ -553,89 +583,98 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       )}
 
       {showStarter ? (
-        <div>
-          <div className="text-center my-6">
-            <p className="text-2xl font-semibold text-blue-600 animate-pulse">
-              Get ready to level up your grammar skills!
-            </p>
-            <p className="mt-4 text-lg text-gray-700">
-              You’re about to embark on a fun journey to master grammar. Let’s
-              start the session!
-            </p>
-            <button
-              onClick={() => {
-                setShowStarter(false);
-                startNewSession();
-              }}
-              className="px-8 mt-6 py-4 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold rounded-lg shadow-xl hover:from-green-500 hover:to-blue-600 transform transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300"
-            >
-              Start the Grammar Session!
-            </button>
-          </div>
+        <div className="text-center my-6">
+          <p className="text-2xl font-semibold text-green-400 animate-pulse">
+            Get ready to level up your grammar skills!
+          </p>
+          <p className="mt-4 text-lg text-gray-400">
+            You’re about to embark on a fun journey to master grammar. Let’s
+            start the session!
+          </p>
+          <button
+            onClick={() => {
+              setShowStarter(false);
+              startNewSession();
+            }}
+            className="px-8 mt-6 py-4 bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
+          >
+            Start the Grammar Session!
+          </button>
         </div>
       ) : (
         <div>
           {loading && !currentExercise ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <RefreshCw className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
-                <p className="text-gray-600">Generating grammar exercise...</p>
+                <RefreshCw className="h-8 w-8 animate-spin text-green-400 mx-auto mb-4" />
+                <p className="text-gray-400">Generating grammar exercise...</p>
               </div>
             </div>
           ) : (
             currentExercise && (
-              <Card className="max-w-4xl mx-auto">
-                <CardHeader className="text-center">
-                  <Badge variant="outline">
-                    {getExerciseTypeTitle(currentExercise.exercise_type)}
-                  </Badge>
-                  <CardTitle className="text-xl">Grammar Exercise</CardTitle>
-                  <CardDescription>Answer the question below</CardDescription>
+              <Card className="max-w-4xl mx-auto bg-[#212121] border border-[#303030] text-white">
+                <CardHeader className="text-center space-y-2">
+                  {/* Badge */}
+                  <div className="flex justify-center">
+                    <Badge
+                      variant="outline"
+                      className="border-purple-500 text-purple-400 bg-[#181818]"
+                    >
+                      {getExerciseTypeTitle(currentExercise.exercise_type)}
+                    </Badge>
+                  </div>
+
+                  {/* Title */}
+                  <CardTitle className="text-xl font-semibold text-white">
+                    Grammar Exercise
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Answer the question below
+                  </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
+                  {/* Grammar Rule */}
                   {currentExercise.grammar_rule && (
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="text-center p-4 bg-[#181818] rounded-lg border border-[#303030]">
                       <div className="flex items-center justify-center space-x-2 mb-2">
-                        <BookOpen className="h-5 w-5 text-yellow-600" />
-                        <span className="font-medium text-yellow-800">
+                        <BookOpen className="h-5 w-5 text-yellow-400" />
+                        <span className="font-medium text-yellow-400">
                           Grammar Rule
                         </span>
                       </div>
-                      <p className="text-gray-700">
+                      <p className="text-gray-300 break-words">
                         {currentExercise.grammar_rule}
                       </p>
                     </div>
                   )}
 
-                  {renderExerciseContent()}
+                  {/* Exercise Content */}
+                  <div className="w-full">{renderExerciseContent()}</div>
 
+                  {/* Result */}
                   {showResult && (
                     <div
-                      className={`p-4 rounded-lg ${
+                      className={`p-4 rounded-lg border text-center ${
                         isCorrect
-                          ? "bg-green-50 border border-green-200"
-                          : "bg-red-50 border border-red-200"
+                          ? "border-green-400 bg-[#181818] text-green-400"
+                          : "border-red-400 bg-[#181818] text-red-400"
                       }`}
                     >
                       <div className="flex items-center justify-center space-x-2 mb-2">
                         {isCorrect ? (
-                          <CheckCircle className="h-6 w-6 text-green-600" />
+                          <CheckCircle className="h-6 w-6 text-green-400" />
                         ) : (
-                          <XCircle className="h-6 w-6 text-red-600" />
+                          <XCircle className="h-6 w-6 text-red-400" />
                         )}
-                        <span
-                          className={`font-semibold ${
-                            isCorrect ? "text-green-700" : "text-red-700"
-                          }`}
-                        >
+                        <span className="font-semibold text-lg">
                           {isCorrect ? "Excellent!" : "Not quite right"}
                         </span>
                       </div>
 
                       {!isCorrect && (
                         <div className="text-center mb-3">
-                          <p className="text-red-600 mb-2">
+                          <p className="text-red-400 mb-2 break-words">
                             <strong>Correct answer:</strong>{" "}
                             {currentExercise.correct_answer}
                           </p>
@@ -643,9 +682,9 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                       )}
 
                       {currentExercise.feedback && (
-                        <div className="text-center p-3 bg-blue-50 rounded border">
-                          <p className="text-blue-700 text-sm">
-                            <strong>Explanation:</strong>{" "}
+                        <div className="text-center p-3 bg-[#181818] rounded border border-[#303030]">
+                          <p className="text-gray-300 text-sm break-words">
+                            <strong className="text-white">Explanation:</strong>{" "}
                             {currentExercise.feedback}
                           </p>
                         </div>
@@ -653,19 +692,21 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                     </div>
                   )}
 
-                  <div className="flex justify-center space-x-4">
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap justify-center gap-4">
                     {!showResult ? (
                       <Button
                         onClick={handleAnswer}
                         disabled={!userAnswer.trim() || loading}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white min-w-32"
                       >
                         {loading ? "Checking..." : "Check Answer"}
                       </Button>
                     ) : (
                       <Button
                         onClick={() => generateNewExercise()}
-                        className="bg-blue-600 text-white"
                         disabled={loading}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white min-w-32"
                       >
                         Next Exercise
                       </Button>
@@ -677,7 +718,6 @@ export function GrammarMode({ profile }: GrammarModeProps) {
           )}
         </div>
       )}
-      {/* Exercise */}
     </div>
   );
 }

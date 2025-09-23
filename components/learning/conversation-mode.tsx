@@ -367,11 +367,13 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   if (!selectedScenario) {
     return (
       <div className="space-y-6">
-        <Card className="text-center">
+        <Card className="text-center bg-[#212121] border border-[#303030] text-[#fff]">
           <CardHeader>
-            <MessageCircle className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-            <CardTitle className="text-2xl">AI Conversation Practice</CardTitle>
-            <CardDescription className="text-lg">
+            <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <CardTitle className="text-2xl text-[#fff]">
+              AI Conversation Practice
+            </CardTitle>
+            <CardDescription className="text-lg text-gray-400">
               Choose a scenario to practice real-world English conversations
             </CardDescription>
           </CardHeader>
@@ -381,32 +383,34 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           {getFilteredScenarios().map((scenario) => (
             <Card
               key={scenario.id}
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-0 bg-gradient-to-br from-white to-gray-50"
+              className="cursor-pointer transition-all duration-200 hover:scale-105 border border-[#303030] bg-[#212121] hover:bg-[#303030]"
               onClick={() => startConversation(scenario)}
             >
               <CardHeader>
                 <div className="flex justify-between items-start mb-2">
-                  <CardTitle className="text-lg">{scenario.title}</CardTitle>
+                  <CardTitle className="text-lg text-[#fff]">
+                    {scenario.title}
+                  </CardTitle>
                   <Badge
                     variant="outline"
                     className={`${
                       scenario.difficulty === "beginner"
-                        ? "border-green-500 text-green-700"
+                        ? "border-green-400 text-green-400"
                         : scenario.difficulty === "intermediate"
-                        ? "border-yellow-500 text-yellow-700"
-                        : "border-red-500 text-red-700"
+                        ? "border-yellow-400 text-yellow-400"
+                        : "border-red-400 text-red-400"
                     }`}
                   >
                     {scenario.difficulty}
                   </Badge>
                 </div>
-                <CardDescription className="text-left">
+                <CardDescription className="text-left text-gray-400">
                   {scenario.description}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 mb-4">{scenario.context}</p>
-                <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <p className="text-sm text-gray-500 mb-4">{scenario.context}</p>
+                <Button className="w-full bg-[#303030] hover:bg-[#181818] text-[#fff] border border-[#181818]">
                   Start Conversation
                 </Button>
               </CardContent>
@@ -418,12 +422,13 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto text-[#fff]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"
+            className="px-8 mt-6 py-4 bg-[#303030] hover:text-white hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
             onClick={() => {
               setSelectedScenario(null);
             }}
@@ -431,14 +436,25 @@ export function ConversationMode({ profile }: ConversationModeProps) {
             ← Back to Scenarios
           </Button>
           <div>
-            <h2 className="text-xl font-semibold">{selectedScenario.title}</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-xl font-semibold text-[#fff]">
+              {selectedScenario.title}
+            </h2>
+            <p className="text-gray-400 text-sm">
               {selectedScenario.description}
             </p>
           </div>
         </div>
 
-        <Badge variant="outline" className="capitalize">
+        <Badge
+          variant="outline"
+          className={`capitalize border ${
+            selectedScenario.difficulty === "beginner"
+              ? "border-green-400 text-green-400"
+              : selectedScenario.difficulty === "intermediate"
+              ? "border-yellow-400 text-yellow-400"
+              : "border-red-400 text-red-400"
+          }`}
+        >
           {selectedScenario.difficulty}
         </Badge>
       </div>
@@ -446,28 +462,30 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       {/* Stats */}
       {sessionStats.messageCount > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="bg-[#212121] border border-[#303030]">
             <CardContent className="p-4 text-center">
-              <MessageCircle className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold">{sessionStats.messageCount}</p>
-              <p className="text-sm text-gray-600">Messages</p>
+              <MessageCircle className="h-6 w-6 text-gray-300 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#fff]">
+                {sessionStats.messageCount}
+              </p>
+              <p className="text-sm text-gray-400">Messages</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#212121] border border-[#303030]">
             <CardContent className="p-4 text-center">
-              <Star className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold">
+              <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#fff]">
                 {sessionStats.averageScore.toFixed(1)}
               </p>
-              <p className="text-sm text-gray-600">Avg Score</p>
+              <p className="text-sm text-gray-400">Avg Score</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#212121] border border-[#303030]">
             <CardContent className="p-4 text-center">
-              <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold">
+              <Clock className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#fff]">
                 {sessionStartTime
                   ? Math.round(
                       (new Date().getTime() - sessionStartTime.getTime()) /
@@ -476,18 +494,20 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                   : 0}
                 m
               </p>
-              <p className="text-sm text-gray-600">Duration</p>
+              <p className="text-sm text-gray-400">Duration</p>
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Chat Interface */}
-      <Card className="h-96">
-        <CardHeader className="pb-3">
+      <Card className="h-96 bg-[#212121] border border-[#303030]">
+        <CardHeader className="pb-3 border-b border-[#303030]">
           <div className="flex items-center space-x-2">
-            <Bot className="h-5 w-5 text-purple-600" />
-            <span className="font-medium">AI Conversation Partner</span>
+            <Bot className="h-5 w-5 text-gray-300" />
+            <span className="font-medium text-[#fff]">
+              AI Conversation Partner
+            </span>
             <div className="w-2 h-2 bg-green-400 rounded-full ml-auto"></div>
           </div>
         </CardHeader>
@@ -509,37 +529,34 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                      message.isUser
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500"
-                        : "bg-gradient-to-r from-purple-500 to-pink-500"
+                      message.isUser ? "bg-[#303030]" : "bg-[#181818]"
                     }`}
                   >
                     {message.isUser ? (
-                      <User className="h-4 w-4" />
+                      <User className="h-4 w-4 text-gray-200" />
                     ) : (
-                      <Bot className="h-4 w-4" />
+                      <Bot className="h-4 w-4 text-gray-200" />
                     )}
                   </div>
 
                   <div
                     className={`rounded-lg px-4 py-2 ${
                       message.isUser
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                        : "bg-gray-100 text-gray-900"
+                        ? "bg-[#303030] text-[#fff]"
+                        : "bg-[#181818] text-[#fff]"
                     }`}
                   >
                     {/* ✅ Show corrected text if available */}
                     {message.corrected && (
-                      <p className="text-sm text-green-600 font-semibold mb-1">
-                        <span className="text-green-900">
-                          correct sentence: {""}{" "}
+                      <p className="text-sm text-green-400 font-semibold mb-1">
+                        <span className="text-green-500">
+                          correct sentence:{" "}
                         </span>
                         {message.corrected}
-                        {""}
                       </p>
                     )}
                     {message.correction_explanation && (
-                      <p className="text-xs text-gray-500 italic mb-1">
+                      <p className="text-xs text-gray-400 italic mb-1">
                         {message.correction_explanation}
                       </p>
                     )}
@@ -561,10 +578,10 @@ export function ConversationMode({ profile }: ConversationModeProps) {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-[#181818] flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-gray-200" />
                   </div>
-                  <div className="bg-gray-100 rounded-lg px-4 py-2">
+                  <div className="bg-[#303030] rounded-lg px-4 py-2">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div
@@ -585,7 +602,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           </div>
 
           {/* Input */}
-          <div className="flex items-center space-x-2">
+          <div className="flex  -mb-4 items-center space-x-2">
             <Input
               ref={inputRef}
               value={inputMessage}
@@ -593,13 +610,13 @@ export function ConversationMode({ profile }: ConversationModeProps) {
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 bg-[#181818] border border-[#303030] text-[#fff] placeholder:text-gray-500"
             />
             <Button
               onClick={sendMessage}
               disabled={!inputMessage.trim() || isLoading}
               size="sm"
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              className="bg-[#303030] hover:bg-[#181818] text-[#fff] border border-[#181818]"
             >
               <Send className="h-4 w-4" />
             </Button>
