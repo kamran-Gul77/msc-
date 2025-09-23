@@ -24,6 +24,7 @@ created_at timestamp with time zone DEFAULT now(),
 corrected_text text,
 correction_explanation text,
 context_summary text,
+mode text DEFAULT 'conversation'::text CHECK (mode = ANY (ARRAY['conversation'::text, 'grammar'::text, 'vocabulary'::text])),
 CONSTRAINT conversations_pkey PRIMARY KEY (id),
 CONSTRAINT conversations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
 );
@@ -42,6 +43,7 @@ created_at timestamp with time zone DEFAULT now(),
 options jsonb DEFAULT '[]'::jsonb,
 blank_position integer,
 user_id uuid,
+proficiency_level text DEFAULT 'beginner'::text CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
 CONSTRAINT grammar_exercises_pkey PRIMARY KEY (id),
 CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
 );
