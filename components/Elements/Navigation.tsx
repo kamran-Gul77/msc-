@@ -14,7 +14,7 @@ export function Navigation() {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2">
             <MessageCircle className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">EnglishAI</span>
+            <span className="text-xl font-bold text-foreground">linguaAi</span>
           </Link>
 
           {/* Desktop Navigation */}

@@ -9,7 +9,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <MessageCircle className="h-6 w-6 text-primary" />
-              <span className="text-lg font-bold text-foreground">EnglishAI</span>
+              <span className="text-lg font-bold text-foreground">linguaAi</span>
             </div>
             <p className="text-muted-foreground text-sm">
               Master English with our AI-powered learning platform. Practice vocabulary, grammar, and conversation
@@ -97,7 +97,7 @@ export function Footer() {
 
         <div className="border-t border-border mt-8 pt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 EnglishAI. All rights reserved. Built with care for English learners worldwide.
+            © 2024 linguaAi. All rights reserved. Built with care for English learners worldwide.
           </p>
         </div>
       </div>

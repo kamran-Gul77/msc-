@@ -250,10 +250,10 @@ export default function PrivacyPage() {
                 </p>
                 <div className="space-y-2 text-sm">
                   <p>
-                    <strong>Email:</strong> privacy@englishai.com
+                    <strong>Email:</strong> privacy@linguaAi.com
                   </p>
                   <p>
-                    <strong>Address:</strong> EnglishAI Privacy Team, 123
+                    <strong>Address:</strong> linguaAi Privacy Team, 123
                     Learning Street, Education City, EC 12345
                   </p>
                   <p>

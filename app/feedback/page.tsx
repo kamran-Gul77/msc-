@@ -48,9 +48,7 @@ export default function FeedbackPage() {
     e.preventDefault();
     // Handle form submission here
     console.log("Feedback submitted:", { ...formData, rating });
-    alert(
-      "Thank you for your feedback! Your input helps us improve EnglishAI."
-    );
+    alert("Thank you for your feedback! Your input helps us improve linguaAi.");
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -98,8 +96,8 @@ export default function FeedbackPage() {
               Share Your Feedback
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your experience matters to us. Help us improve EnglishAI by
-              sharing your thoughts and suggestions.
+              Your experience matters to us. Help us improve linguaAi by sharing
+              your thoughts and suggestions.
             </p>
           </div>
 
@@ -308,7 +306,7 @@ export default function FeedbackPage() {
                       </Label>
                       <Textarea
                         id="experience"
-                        placeholder="Tell us about your positive experiences with EnglishAI..."
+                        placeholder="Tell us about your positive experiences with linguaAi..."
                         rows={4}
                         value={formData.experience}
                         onChange={(e) =>
@@ -322,7 +320,7 @@ export default function FeedbackPage() {
                       <Label htmlFor="suggestion">How can we improve?</Label>
                       <Textarea
                         id="suggestion"
-                        placeholder="Share your suggestions for making EnglishAI even better..."
+                        placeholder="Share your suggestions for making linguaAi even better..."
                         rows={4}
                         value={formData.suggestion}
                         onChange={(e) =>
@@ -333,7 +331,7 @@ export default function FeedbackPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="recommend">
-                        Would you recommend EnglishAI?
+                        Would you recommend linguaAi?
                       </Label>
                       <Select
                         onValueChange={(value) =>

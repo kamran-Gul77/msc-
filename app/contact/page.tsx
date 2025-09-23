@@ -58,7 +58,7 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Have questions about EnglishAI? We are here to help you on your
+              Have questions about linguaAi? We are here to help you on your
               learning journey.
             </p>
           </div>
@@ -83,7 +83,7 @@ export default function ContactPage() {
                     <div>
                       <p className="font-medium text-foreground">Email</p>
                       <p className="text-sm text-muted-foreground">
-                        support@englishai.com
+                        support@linguaAi.com
                       </p>
                     </div>
                   </div>
