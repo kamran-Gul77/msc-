@@ -502,8 +502,13 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       {/* Chat Interface */}
       <Card className="h-100 bg-[#212121] border border-[#303030]">
+=======
+      {/* Chat Interface */}
+      <Card className="h-96 bg-[#212121] border border-[#303030]">
+>>>>>>> parent of 45f1815 (Updated package.json)
 =======
       {/* Chat Interface */}
       <Card className="h-96 bg-[#212121] border border-[#303030]">
@@ -517,6 +522,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
             <div className="w-2 h-2 bg-green-400 rounded-full ml-auto"></div>
           </div>
         </CardHeader>
+<<<<<<< HEAD
 <<<<<<< HEAD
 
         <CardContent className="h-[100vh] flex flex-col">
@@ -618,6 +624,9 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                 {messages.map((message) => (
 =======
 
+=======
+
+>>>>>>> parent of 45f1815 (Updated package.json)
         <CardContent className="h-full flex flex-col">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
@@ -633,6 +642,9 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                     message.isUser ? "flex-row-reverse space-x-reverse" : ""
                   }`}
                 >
+<<<<<<< HEAD
+>>>>>>> parent of 45f1815 (Updated package.json)
+=======
 >>>>>>> parent of 45f1815 (Updated package.json)
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${

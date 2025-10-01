@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^3.9.0",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
     "@langchain/google-genai": "^0.2.18",
@@ -20,6 +21,8 @@
     "@langchain/google-genai": "^0.2.18",
     "@langchain/openai": "^0.6.14",
 >>>>>>> 45f1815dd92e00473b7ab3cd43369db34a7d077d
+=======
+>>>>>>> parent of 45f1815 (Updated package.json)
 =======
 >>>>>>> parent of 45f1815 (Updated package.json)
     "@next/swc-wasm-nodejs": "13.5.1",
