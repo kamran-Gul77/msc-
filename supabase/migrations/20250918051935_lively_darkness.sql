@@ -1,95 +1,3 @@
-/*
-  # Create Learning Platform Schema
-
-  1. New Tables
-    - `user_profiles` - Store user information and preferences
-      - `id` (uuid, primary key, references auth.users)
-      - `display_name` (text)
-      - `proficiency_level` (text, default 'beginner')
-      - `learning_goals` (text array)
-      - `preferred_topics` (text array)
-      - `total_points` (integer, default 0)
-      - `current_level` (integer, default 1)
-      - `created_at` (timestamp)
-      - `updated_at` (timestamp)
-
-    - `learning_sessions` - Track individual learning sessions
-      - `id` (uuid, primary key)
-      - `user_id` (uuid, foreign key)
-      - `mode` (text, vocabulary/grammar/conversation)
-      - `score` (integer)
-      - `duration` (integer, seconds)
-      - `exercises_completed` (integer)
-      - `difficulty_level` (text)
-      - `created_at` (timestamp)
-
-    - `vocabulary_exercises` - Store vocabulary exercise attempts
-      - `id` (uuid, primary key)
-      - `session_id` (uuid, foreign key)
-      - `word` (text)
-      - `exercise_type` (text, synonym/antonym/context/recognition)
-      - `user_answer` (text)
-      - `correct_answer` (text)
-      - `is_correct` (boolean)
-      - `time_taken` (integer)
-      - `created_at` (timestamp)
-
-    - `grammar_exercises` - Store grammar exercise attempts
-      - `id` (uuid, primary key)
-      - `session_id` (uuid, foreign key)
-      - `sentence` (text)
-      - `exercise_type` (text, correction/fill_blank/quiz)
-      - `user_answer` (text)
-      - `correct_answer` (text)
-      - `is_correct` (boolean)
-      - `grammar_rule` (text)
-      - `feedback` (text)
-      - `time_taken` (integer)
-      - `created_at` (timestamp)
-
-    - `conversations` - Store conversation interactions
-      - `id` (uuid, primary key)
-      - `session_id` (uuid, foreign key)
-      - `scenario` (text)
-      - `user_message` (text)
-      - `ai_response` (text)
-      - `feedback_score` (integer, 1-10)
-      - `conversation_context` (jsonb)
-      - `created_at` (timestamp)
-
-    - `achievements` - Track user achievements and badges
-      - `id` (uuid, primary key)
-      - `user_id` (uuid, foreign key)
-      - `achievement_type` (text)
-      - `title` (text)
-      - `description` (text)
-      - `badge_icon` (text)
-      - `earned_at` (timestamp)
-
-    - `learning_analytics` - Store daily learning analytics
-      - `id` (uuid, primary key)
-      - `user_id` (uuid, foreign key)
-      - `date` (date)
-      - `total_time_spent` (integer)
-      - `vocabulary_accuracy` (decimal)
-      - `grammar_accuracy` (decimal)
-      - `conversation_quality` (decimal)
-      - `exercises_completed` (integer)
-      - `current_streak` (integer)
-      - `created_at` (timestamp)
-
-  2. Security
-    - Enable RLS on all tables
-    - Add policies for authenticated users to manage their own data
-    - Create indexes for better performance
-    - Add triggers for automatic timestamp updates
-
-  3. Functions
-    - Create function to update user profile timestamp
-    - Create trigger to automatically update updated_at field
-*/
-
--- Create user_profiles table
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
@@ -116,8 +24,23 @@ CREATE TABLE public.conversations (
   corrected_text text,
   correction_explanation text,
   context_summary text,
+  mode text DEFAULT 'conversation'::text CHECK (mode = ANY (ARRAY['conversation'::text, 'grammar'::text, 'vocabulary'::text])),
   CONSTRAINT conversations_pkey PRIMARY KEY (id),
   CONSTRAINT conversations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+);
+CREATE TABLE public.feedback (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  name text,
+  email text,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  category text,
+  experience text NOT NULL,
+  suggestion text,
+  recommend text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
 CREATE TABLE public.grammar_exercises (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -131,8 +54,24 @@ CREATE TABLE public.grammar_exercises (
   feedback text,
   time_taken integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
+  options jsonb DEFAULT '[]'::jsonb,
+  blank_position integer,
+  user_id uuid,
+  proficiency_level text DEFAULT 'beginner'::text CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
   CONSTRAINT grammar_exercises_pkey PRIMARY KEY (id),
   CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+);
+CREATE TABLE public.grammar_pool (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  sentence text NOT NULL,
+  exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['correction'::text, 'fill_blank'::text, 'quiz'::text])),
+  correct_answer text NOT NULL,
+  grammar_rule text,
+  feedback text,
+  options jsonb DEFAULT '[]'::jsonb,
+  blank_position integer,
+  CONSTRAINT grammar_pool_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.learning_analytics (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -184,6 +123,23 @@ CREATE TABLE public.vocabulary_exercises (
   is_correct boolean DEFAULT false,
   time_taken integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  options jsonb DEFAULT '[]'::jsonb,
+  example_sentence text,
+  proficiency_level text,
+  pool_id uuid,
   CONSTRAINT vocabulary_exercises_pkey PRIMARY KEY (id),
-  CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+  CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id),
+  CONSTRAINT vocabulary_exercises_pool_id_fkey FOREIGN KEY (pool_id) REFERENCES public.vocabulary_pool(id)
+);
+CREATE TABLE public.vocabulary_pool (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  word text NOT NULL UNIQUE,
+  exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['synonym'::text, 'antonym'::text, 'context'::text, 'recognition'::text])),
+  correct_answer text NOT NULL,
+  options jsonb DEFAULT '[]'::jsonb,
+  example_sentence text,
+  proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vocabulary_pool_pkey PRIMARY KEY (id)
 );
