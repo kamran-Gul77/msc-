@@ -501,7 +501,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       )}
 
       {/* Chat Interface */}
-      <Card className="h-96 bg-[#212121] border border-[#303030]">
+      <Card className="h-100 bg-[#212121] border border-[#303030]">
         <CardHeader className="pb-3 border-b border-[#303030]">
           <div className="flex items-center space-x-2">
             <Bot className="h-5 w-5 text-gray-300" />
@@ -512,7 +512,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="h-full flex flex-col">
+        <CardContent className="h-[100vh] flex flex-col">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
             {messages.map((message) => (
