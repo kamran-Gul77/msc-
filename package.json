@@ -11,9 +11,14 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
+<<<<<<< HEAD
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
     "@langchain/google-genai": "^0.2.18",
+=======
+    "@langchain/google-genai": "^0.2.18",
+    "@langchain/openai": "^0.6.14",
+>>>>>>> 45f1815dd92e00473b7ab3cd43369db34a7d077d
     "@next/swc-wasm-nodejs": "13.5.1",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -57,6 +62,7 @@
     "eslint": "8.49.0",
     "eslint-config-next": "13.5.1",
     "input-otp": "^1.2.4",
+    "langchain": "^0.3.35",
     "lucide-react": "^0.446.0",
     "next": "13.5.1",
     "next-themes": "^0.3.0",
