@@ -11,19 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-import {
-  MessageCircle,
-  Send,
-  Bot,
-  User,
-  Star,
-  Clock,
-  TrendingUp,
-  Volume2,
-} from "lucide-react";
+import { MessageCircle, Send, Bot, User, Star, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
+import { ChatSidebar } from "./chat-sidebar";
+import { MessageActions } from "./message-actions";
 
 interface ConversationModeProps {
   profile: any;
@@ -36,7 +28,7 @@ interface Message {
   timestamp: Date;
   feedback_score?: number;
   correction_explanation?: string;
-  corrected?: string; // ✅ new field
+  corrected?: string;
 }
 
 interface ConversationScenario {
@@ -106,6 +98,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     useState<ConversationScenario | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [sessionStats, setSessionStats] = useState({
     messageCount: 0,
     averageScore: 0,
@@ -125,7 +118,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [selectedScenario]);
+  }, [selectedScenario, currentChatId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -135,9 +128,9 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     setSelectedScenario(scenario);
     setMessages([]);
     setSessionStartTime(new Date());
+    setCurrentChatId(null);
 
     try {
-      // 1️⃣ Check if there's an existing session
       const { data: existingSession, error: fetchError } = await supabase
         .from("learning_sessions")
         .select("*")
@@ -145,37 +138,57 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         .eq("mode", "conversation")
         .eq("difficulty_level", scenario.difficulty)
         .eq("scenario", scenario.id)
-        .single();
+        .maybeSingle();
 
       if (existingSession) {
         setSessionId(existingSession.id);
-        await loadConversation(existingSession.id, scenario.id); // ✅ fixed
-        return;
-      }
+      } else {
+        const { data, error } = await supabase
+          .from("learning_sessions")
+          .insert({
+            user_id: user?.id,
+            mode: "conversation",
+            difficulty_level: scenario.difficulty,
+            scenario: scenario.id,
+          })
+          .select()
+          .single();
 
-      // 2️⃣ If no session, create new
-      // Create new session (now also saving scenario)
+        if (error) throw error;
+        setSessionId(data.id);
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+
+  const handleNewChat = async () => {
+    if (!selectedScenario || !sessionId) return;
+
+    setMessages([]);
+    setCurrentChatId(null);
+    setSessionStartTime(new Date());
+
+    try {
       const { data, error } = await supabase
-        .from("learning_sessions")
+        .from("chat_sessions")
         .insert({
           user_id: user?.id,
-          mode: "conversation",
-          difficulty_level: scenario.difficulty,
-          scenario: scenario.id, // ✅ added scenario here
+          scenario_id: selectedScenario.id,
+          title: `${selectedScenario.title} - ${new Date().toLocaleDateString()}`,
         })
         .select()
         .single();
 
       if (error) throw error;
-      setSessionId(data.id);
+      setCurrentChatId(data.id);
 
-      // 3️⃣ Get initial AI message
       const response = await fetch("/api/conversation/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scenario: scenario.id,
-          context: scenario.context,
+          scenario: selectedScenario.id,
+          context: selectedScenario.context,
           proficiency_level: profile?.proficiency_level || "beginner",
         }),
       });
@@ -194,20 +207,73 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       setMessages([aiMessage]);
 
       await supabase.from("conversations").insert({
-        session_id: data.id,
-        scenario: scenario.id,
-        user_message: "",
+        session_id: sessionId,
+        chat_session_id: data.id,
+        scenario: selectedScenario.id,
+        user_message: null,
         ai_response: message,
-        conversation_context: { scenario: scenario.id, turn: 1 },
+        conversation_context: { scenario: selectedScenario.id, turn: 1 },
       });
     } catch (error) {
-      console.error("Error starting conversation:", error);
+      console.error("Error creating new chat:", error);
+    }
+  };
+
+  const handleChatSelect = async (chatId: string) => {
+    if (!selectedScenario) return;
+
+    setCurrentChatId(chatId);
+    setMessages([]);
+    setSessionStartTime(new Date());
+
+    try {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("chat_session_id", chatId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const loadedMessages: Message[] = [];
+
+      data.forEach((row: any) => {
+        if (row.user_message) {
+          loadedMessages.push({
+            id: `user-${row.id}`,
+            content: row.user_message,
+            isUser: true,
+            timestamp: new Date(row.created_at),
+          });
+        }
+
+        if (row.ai_response) {
+          loadedMessages.push({
+            id: `ai-${row.id}`,
+            content: row.ai_response,
+            isUser: false,
+            corrected: row.corrected_text,
+            correction_explanation: row.correction_explanation,
+            timestamp: new Date(row.created_at),
+            feedback_score: row.feedback_score,
+          });
+        }
+      });
+
+      setMessages(loadedMessages);
+    } catch (error) {
+      console.error("Error loading chat:", error);
     }
   };
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || !selectedScenario || !sessionId || isLoading)
       return;
+
+    if (!currentChatId) {
+      await handleNewChat();
+      return;
+    }
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -230,7 +296,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           context: selectedScenario.context,
           conversation_history: messages,
           proficiency_level: profile?.proficiency_level || "beginner",
-          session_id: sessionId, // ✅ now always send session id
+          session_id: sessionId,
+          chat_session_id: currentChatId,
         }),
       });
 
@@ -239,11 +306,9 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       const data = await response.json();
       const ai = data.ai || {};
 
-      // ✅ AI structured fields (from backend)
       const aiResponse = ai.ai_reply || "⚠️ No reply";
       const correctedText = ai.corrected_text || null;
       const correctionExplanation = ai.correction_explanation || null;
-      const contextSummary = ai.context_summary || null;
 
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
@@ -256,23 +321,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
       setMessages((prev) => [...prev, aiMessage]);
 
-      // Save conversation to DB
-      await supabase.from("conversations").insert({
-        session_id: sessionId,
-        scenario: selectedScenario.id,
-        user_message: inputMessage,
-        ai_response: aiResponse,
-        corrected_text: correctedText,
-        correction_explanation: correctionExplanation,
-        context_summary: contextSummary,
-        conversation_context: {
-          scenario: selectedScenario.id,
-          turn: messages.length + 1,
-          user_level: profile?.proficiency_level || "beginner",
-        },
-      });
-
-      // Update stats
       const newMessageCount = sessionStats.messageCount + 1;
       setSessionStats((prev) => ({
         ...prev,
@@ -312,56 +360,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     return conversationScenarios.filter((scenario) => {
       const scenarioLevelNum =
         levelOrder[scenario.difficulty as keyof typeof levelOrder];
-      return scenarioLevelNum <= userLevelNum + 1; // Allow one level above
+      return scenarioLevelNum <= userLevelNum + 1;
     });
-  };
-  const loadConversation = async (sessionId: string, scenarioId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("session_id", sessionId)
-        .eq("scenario", scenarioId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        setMessages([]);
-        return;
-      }
-
-      const loadedMessages: Message[] = [];
-
-      data.forEach((row: any, index: number) => {
-        // User message first
-        if (row.user_message) {
-          loadedMessages.push({
-            id: `user-${row.id || index}`,
-            content: row.user_message,
-            isUser: true,
-            timestamp: new Date(row.created_at),
-            feedback_score: row.feedback_score || null,
-          });
-        }
-
-        if (row.ai_response) {
-          loadedMessages.push({
-            id: `ai-${row.id || index}`,
-            content: row.ai_response,
-            isUser: false,
-            corrected: row.corrected_text, // ✅ only on AI side
-            correction_explanation: row.correction_explanation,
-            timestamp: new Date(row.created_at),
-            feedback_score: row.feedback_score || null,
-          });
-        }
-      });
-
-      setMessages(loadedMessages);
-    } catch (err) {
-      console.error("Error loading conversation:", err);
-    }
   };
 
   if (!selectedScenario) {
@@ -422,15 +422,16 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto text-[#fff]">
-      {/* Header */}
+    <div className="space-y-6 text-[#fff]">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"
-            className="px-8 mt-6 py-4 bg-[#303030] hover:text-white hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
+            className="px-8 py-4 bg-[#303030] hover:text-white hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
             onClick={() => {
               setSelectedScenario(null);
+              setCurrentChatId(null);
+              setMessages([]);
             }}
           >
             ← Back to Scenarios
@@ -459,7 +460,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         </Badge>
       </div>
 
-      {/* Stats */}
       {sessionStats.messageCount > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-[#212121] border border-[#303030]">
@@ -500,129 +500,161 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         </div>
       )}
 
-      {/* Chat Interface */}
-      <Card className="h-96 bg-[#212121] border border-[#303030]">
-        <CardHeader className="pb-3 border-b border-[#303030]">
-          <div className="flex items-center space-x-2">
-            <Bot className="h-5 w-5 text-gray-300" />
-            <span className="font-medium text-[#fff]">
-              AI Conversation Partner
-            </span>
-            <div className="w-2 h-2 bg-green-400 rounded-full ml-auto"></div>
-          </div>
-        </CardHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
+          <ChatSidebar
+            scenarioId={selectedScenario.id}
+            currentChatId={currentChatId}
+            onChatSelect={handleChatSelect}
+            onNewChat={handleNewChat}
+          />
+        </div>
 
-        <CardContent className="h-full flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.isUser ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${
-                    message.isUser ? "flex-row-reverse space-x-reverse" : ""
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                      message.isUser ? "bg-[#303030]" : "bg-[#181818]"
-                    }`}
-                  >
-                    {message.isUser ? (
-                      <User className="h-4 w-4 text-gray-200" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-gray-200" />
-                    )}
-                  </div>
-
-                  <div
-                    className={`rounded-lg px-4 py-2 ${
-                      message.isUser
-                        ? "bg-[#303030] text-[#fff]"
-                        : "bg-[#181818] text-[#fff]"
-                    }`}
-                  >
-                    {/* ✅ Show corrected text if available */}
-                    {message.corrected && (
-                      <p className="text-sm text-green-400 font-semibold mb-1">
-                        <span className="text-green-500">
-                          correct sentence:{" "}
-                        </span>
-                        {message.corrected}
-                      </p>
-                    )}
-                    {message.correction_explanation && (
-                      <p className="text-xs text-gray-400 italic mb-1">
-                        {message.correction_explanation}
-                      </p>
-                    )}
-                    {/* Normal AI/User message */}
-                    <p className="text-sm">{message.content}</p>
-                    {message.feedback_score && (
-                      <div className="flex items-center space-x-1 mt-2">
-                        <Star className="h-3 w-3 text-yellow-400" />
-                        <span className="text-xs">
-                          {message.feedback_score}/10
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        <div className="lg:col-span-3">
+          <Card className="h-[600px] bg-[#212121] border border-[#303030]">
+            <CardHeader className="pb-3 border-b border-[#303030]">
+              <div className="flex items-center space-x-2">
+                <Bot className="h-5 w-5 text-gray-300" />
+                <span className="font-medium text-[#fff]">
+                  AI Conversation Partner
+                </span>
+                <div className="w-2 h-2 bg-green-400 rounded-full ml-auto"></div>
               </div>
-            ))}
+            </CardHeader>
 
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-[#181818] flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-gray-200" />
+            <CardContent className="h-full flex flex-col p-0">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4">
+                {messages.length === 0 && !currentChatId && (
+                  <div className="text-center text-gray-400 py-12">
+                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg font-medium mb-2">Start a new chat</p>
+                    <p className="text-sm">
+                      Send a message to begin your conversation
+                    </p>
                   </div>
-                  <div className="bg-[#303030] rounded-lg px-4 py-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                )}
+
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.isUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${
+                        message.isUser ? "flex-row-reverse space-x-reverse" : ""
+                      }`}
+                    >
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                          message.isUser ? "bg-[#303030]" : "bg-[#181818]"
+                        }`}
+                      >
+                        {message.isUser ? (
+                          <User className="h-4 w-4 text-gray-200" />
+                        ) : (
+                          <Bot className="h-4 w-4 text-gray-200" />
+                        )}
+                      </div>
+
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
+                        className={`rounded-lg px-4 py-2 ${
+                          message.isUser
+                            ? "bg-[#303030] text-[#fff]"
+                            : "bg-[#181818] text-[#fff]"
+                        }`}
+                      >
+                        {message.corrected && (
+                          <div className="mb-2 p-2 bg-green-500/10 border border-green-500/20 rounded">
+                            <p className="text-xs text-green-400 font-semibold mb-1">
+                              Corrected:
+                            </p>
+                            <p className="text-sm text-green-400">
+                              {message.corrected}
+                            </p>
+                          </div>
+                        )}
+                        {message.correction_explanation && (
+                          <div className="mb-2 p-2 bg-blue-500/10 border border-blue-500/20 rounded">
+                            <p className="text-xs text-blue-400 font-semibold mb-1">
+                              Explanation:
+                            </p>
+                            <p className="text-xs text-blue-400 italic">
+                              {message.correction_explanation}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-sm">{message.content}</p>
+                        {!message.isUser && (
+                          <MessageActions content={message.content} />
+                        )}
+                        {message.feedback_score && (
+                          <div className="flex items-center space-x-1 mt-2">
+                            <Star className="h-3 w-3 text-yellow-400" />
+                            <span className="text-xs">
+                              {message.feedback_score}/10
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded-full bg-[#181818] flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-gray-200" />
+                      </div>
+                      <div className="bg-[#303030] rounded-lg px-4 py-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
-            )}
 
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="flex  -mb-4 items-center space-x-2">
-            <Input
-              ref={inputRef}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="flex-1 bg-[#181818] border border-[#303030] text-[#fff] placeholder:text-gray-500"
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={!inputMessage.trim() || isLoading}
-              size="sm"
-              className="bg-[#303030] hover:bg-[#181818] text-[#fff] border border-[#181818]"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center space-x-2 p-4 border-t border-[#303030]">
+                <Input
+                  ref={inputRef}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={
+                    currentChatId
+                      ? "Type your message..."
+                      : "Start a new chat by typing a message..."
+                  }
+                  disabled={isLoading}
+                  className="flex-1 bg-[#181818] border border-[#303030] text-[#fff] placeholder:text-gray-500"
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!inputMessage.trim() || isLoading}
+                  size="sm"
+                  className="bg-[#303030] hover:bg-[#181818] text-[#fff] border border-[#181818]"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
