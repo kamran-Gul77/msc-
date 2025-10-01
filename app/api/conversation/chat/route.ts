@@ -246,21 +246,20 @@
 //   }
 // }
 
+// app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { EnglishLearningChain } from "@/lib/langchain/conversation-chain";
 
 export const dynamic = "force-dynamic";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // use service key for inserts (keep secret)
 );
 
 interface ConversationChatRequest {
   message: string;
-  session_id: string;
-  chat_session_id?: string;
+  session_id: string; // ✅ must send this from frontend
   scenario?: string;
   context?: string;
   conversation_history?: Array<{ content: string; isUser: boolean }>;
@@ -268,6 +267,54 @@ interface ConversationChatRequest {
   topic?: string;
 }
 
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+function buildPromptBody(body: ConversationChatRequest) {
+  const {
+    message,
+    scenario = "general",
+    context = "",
+    conversation_history = [],
+    proficiency_level = "beginner",
+    topic = "",
+  } = body;
+
+  const historyLines = conversation_history
+    .slice(-10)
+    .map((h, i) => `${h.isUser ? "User" : "AI"}${i + 1}: ${h.content}`)
+    .join("\n");
+
+  const systemInstruction = `
+You are an English conversation tutor assistant. Requirements:
+1) Talk with the user in natural, fluent English on the selected topic (${
+    topic || scenario
+  }).
+2) If user English contains mistakes, provide:
+   - corrected_text
+   - correction_explanation
+   - ai_reply
+3) Always return a short context_summary (1–2 sentences).
+4) Respond in JSON ONLY with keys: corrected_text, correction_explanation, ai_reply, context_summary.
+`;
+
+  const userPrompt = `
+User message: """${message}"""
+Scenario: ${scenario}
+Level: ${proficiency_level}
+Conversation history:
+${historyLines || "(none)"}
+Extra context: ${context || "(none)"}
+`;
+
+  return {
+    contents: [
+      {
+        parts: [{ text: systemInstruction }, { text: userPrompt }],
+      },
+    ],
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -281,51 +328,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const conversationChain = new EnglishLearningChain(apiKey);
+    const promptBody = buildPromptBody(body);
 
-    if (body.conversation_history && body.conversation_history.length > 0) {
-      const messages = body.conversation_history.map((msg) => ({
-        role: msg.isUser ? "user" : "assistant",
-        content: msg.content,
-      }));
-      await conversationChain.loadMemory(messages);
-    }
-
-    const parsed = await conversationChain.chat({
-      scenario: body.scenario || "general",
-      proficiencyLevel: body.proficiency_level || "beginner",
-      userMessage: body.message,
-      context: body.context,
+    // --- Gemini API call ---
+    const res = await fetch(GEMINI_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify(promptBody),
     });
 
+    const json = await res.json();
+
+    // --- Extract raw text from Gemini ---
+    let rawText = "";
+    if (json?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      rawText = json.candidates[0].content.parts[0].text;
+    } else if (json?.candidates?.[0]?.content?.[0]?.text) {
+      rawText = json.candidates[0].content[0].text;
+    } else if (json?.text) {
+      rawText = json.text;
+    } else {
+      rawText = JSON.stringify(json);
+    }
+
+    // --- Clean & parse JSON safely ---
+    let parsed: any;
+    try {
+      const cleaned = rawText.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      parsed = {
+        corrected_text: null,
+        correction_explanation: null,
+        ai_reply: rawText,
+        context_summary: "",
+      };
+    }
+
+    // --- Save to Supabase ---
     if (body.session_id) {
-      const insertData: any = {
+      // Save user message
+      await supabase.from("conversations").insert({
         session_id: body.session_id,
         scenario: body.scenario || "general",
         user_message: body.message,
+        ai_response: null, // only user msg here
+        corrected_text: null,
+        correction_explanation: null,
+        context_summary: null,
+        conversation_context: { proficiency_level: body.proficiency_level },
+      });
+
+      // Save AI response
+      await supabase.from("conversations").insert({
+        session_id: body.session_id,
+        scenario: body.scenario || "general",
+        user_message: null,
         ai_response: parsed.ai_reply,
         corrected_text: parsed.corrected_text,
         correction_explanation: parsed.correction_explanation,
         context_summary: parsed.context_summary,
         conversation_context: { proficiency_level: body.proficiency_level },
-      };
-
-      if (body.chat_session_id) {
-        insertData.chat_session_id = body.chat_session_id;
-
-        await supabase
-          .from("chat_sessions")
-          .update({ last_message_at: new Date().toISOString() })
-          .eq("id", body.chat_session_id);
-      }
-
-      await supabase.from("conversations").insert(insertData);
+      });
     }
 
+    // ✅ Return parsed JSON directly (no code block)
     return NextResponse.json({
       ok: true,
       ai: parsed,
-      model: "gemini-2.0-flash-exp",
+      model: GEMINI_MODEL,
     });
   } catch (error) {
     console.error("Server error:", error);
