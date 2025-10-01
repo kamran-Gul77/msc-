@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Menu, X } from "lucide-react";
+import { MessageCircle, Menu, X, Brain } from "lucide-react";
 import { useState } from "react";
 
 export function Navigation() {
@@ -13,8 +13,8 @@ export function Navigation() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <MessageCircle className="h-8 w-8 text-yellow-400" />
-            <span className="text-xl font-bold text-white">linguaAi</span>
+            <Brain className="h-8 w-8 text-[#fff]" />
+            <span className="text-xl font-bold text-white">LinguaAi</span>
           </Link>
 
           {/* Desktop Navigation */}

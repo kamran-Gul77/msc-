@@ -121,17 +121,17 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-0">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#181818] to-[#1e1e1e] flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl shadow-xl border border-[#303030] bg-[#1a1a1a] text-white">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Brain className="h-12 w-12 text-blue-600" />
+            <Brain className="h-12 w-12 text-yellow-400" />
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-2xl font-bold text-white">
             Welcome to LinguaAI
           </CardTitle>
-          <CardDescription>
-            Let&apo;s set up your personalized learning experience
+          <CardDescription className="text-gray-400">
+            Let&apos;s set up your personalized learning experience
           </CardDescription>
         </CardHeader>
 
@@ -143,8 +143,8 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     step >= num
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-yellow-500 text-black"
+                      : "bg-[#2a2a2a] text-gray-400"
                   }`}
                 >
                   {num}
@@ -152,7 +152,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                 {num < 3 && (
                   <div
                     className={`w-12 h-1 mx-2 ${
-                      step > num ? "bg-blue-600" : "bg-gray-200"
+                      step > num ? "bg-yellow-500" : "bg-[#2a2a2a]"
                     }`}
                   />
                 )}
@@ -164,13 +164,17 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
           {step === 1 && (
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <User className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold">Basic Information</h3>
-                <p className="text-gray-600">Tell us about yourself</p>
+                <User className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                <h3 className="text-lg font-semibold text-white">
+                  Basic Information
+                </h3>
+                <p className="text-gray-400">Tell us about yourself</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Display Name</label>
+                <label className="text-sm font-medium text-gray-300">
+                  Display Name
+                </label>
                 <Input
                   placeholder="How would you like to be called?"
                   value={formData.displayName}
@@ -180,11 +184,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                       displayName: e.target.value,
                     }))
                   }
+                  className="bg-[#121212] border border-[#303030] text-white placeholder-gray-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-gray-300">
                   English Proficiency Level
                 </label>
                 <Select
@@ -196,10 +201,10 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     }))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#121212] border border-[#303030] text-white">
                     <SelectValue placeholder="Select your current level" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#1e1e1e] text-white border border-[#303030]">
                     <SelectItem value="beginner">
                       Beginner - Just starting out
                     </SelectItem>
@@ -219,9 +224,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
           {step === 2 && (
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <Target className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold">Learning Goals</h3>
-                <p className="text-gray-600">What would you like to achieve?</p>
+                <Target className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                <h3 className="text-lg font-semibold text-white">
+                  Learning Goals
+                </h3>
+                <p className="text-gray-400">What would you like to achieve?</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -233,8 +240,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                       onCheckedChange={(checked) =>
                         handleGoalChange(goal, checked as boolean)
                       }
+                      className="border-[#303030] data-[state=checked]:bg-yellow-500"
                     />
-                    <label htmlFor={goal} className="text-sm cursor-pointer">
+                    <label
+                      htmlFor={goal}
+                      className="text-sm cursor-pointer text-gray-300"
+                    >
                       {goal}
                     </label>
                   </div>
@@ -247,9 +258,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
           {step === 3 && (
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <BookOpen className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold">Preferred Topics</h3>
-                <p className="text-gray-600">
+                <BookOpen className="h-8 w-8 text-purple-400 mx-auto mb-2" />
+                <h3 className="text-lg font-semibold text-white">
+                  Preferred Topics
+                </h3>
+                <p className="text-gray-400">
                   What subjects interest you most?
                 </p>
               </div>
@@ -263,8 +276,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                       onCheckedChange={(checked) =>
                         handleTopicChange(topic, checked as boolean)
                       }
+                      className="border-[#303030] data-[state=checked]:bg-yellow-500"
                     />
-                    <label htmlFor={topic} className="text-sm cursor-pointer">
+                    <label
+                      htmlFor={topic}
+                      className="text-sm cursor-pointer text-gray-300"
+                    >
                       {topic}
                     </label>
                   </div>
@@ -279,6 +296,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
               variant="outline"
               onClick={() => setStep(step - 1)}
               disabled={step === 1}
+              className="border-[#303030] text-black hover:bg-[#2a2a2a] hover:text-white"
             >
               Previous
             </Button>
@@ -291,7 +309,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     (!formData.displayName || !formData.proficiencyLevel)) ||
                   (step === 2 && formData.learningGoals.length === 0)
                 }
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-yellow-500  hover:bg-yellow-600  text-black font-semibold"
               >
                 Next
               </Button>
@@ -299,7 +317,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
               <Button
                 onClick={handleSubmit}
                 disabled={loading || formData.preferredTopics.length === 0}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-yellow-500  hover:bg-yellow-600  text-black font-semibold"
               >
                 {loading ? "Setting up..." : "Complete Setup"}
               </Button>

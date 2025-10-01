@@ -13,43 +13,56 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/components/providers";
 import { Brain, BookOpen, MessageCircle, Target } from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import { Description } from "@radix-ui/react-toast";
 
 export function AuthPage() {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [signupMessage, setSignupMessage] = useState("");
   const { signIn, signUp } = useAuth();
+const handleSignIn = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await signIn(email, password);
+  } catch (error) {
+    toast({
+      title: "Failed to Login",
+      description: error instanceof Error ? error.message : String(error),
+      variant: "destructive",
+    });
+    console.error("Sign in error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await signIn(email, password);
-    } catch (error) {
-      console.error("Sign in error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleSignUp = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await signUp(email, password);
+    setSignupMessage(
+      "We've sent a confirmation email. Please confirm your email before logging in."
+    );
+    setEmail("");
+    setPassword("");
+  } catch (error) {
+    toast({
+      title: "Failed to Sign Up",
+      description: error instanceof Error ? error.message : String(error),
+      variant: "destructive",
+    });
+    console.error("Sign up error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await signUp(email, password);
-      // ✅ Show confirmation message after successful signup
-      setSignupMessage(
-        "We've sent a confirmation email. Please check your inbox before logging in."
-      );
-      setEmail("");
-      setPassword("");
-    } catch (error) {
-      console.error("Sign up error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#181818] flex items-center justify-center p-4">
@@ -57,12 +70,11 @@ export function AuthPage() {
         {/* Hero Section */}
         <div className="hidden lg:flex flex-col space-y-8 max-w-lg">
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Brain className="h-8 w-8 text-yellow-400" />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-purple-600 bg-clip-text text-transparent">
-                LinguaAI
-              </h1>
-            </div>
+            <Link href="/" className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-[#fff]" />
+              <span className="text-xl font-bold text-white">LinguaAi</span>
+            </Link>
+
             <h2 className="text-4xl font-bold text-white leading-tight">
               Master English with AI-Powered Learning
             </h2>
@@ -130,10 +142,10 @@ export function AuthPage() {
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full  grid-cols-2">
-                <TabsTrigger className="text-black  " value="signin">
+                <TabsTrigger color="#fff" value="signin">
                   Sign In
                 </TabsTrigger>
-                <TabsTrigger className="text-black" value="signup">
+                <TabsTrigger color="#fff" value="signup">
                   Sign Up
                 </TabsTrigger>
               </TabsList>
@@ -158,7 +170,7 @@ export function AuthPage() {
                   />
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-yellow-400 to-purple-600 hover:from-yellow-500 hover:to-purple-700 text-white"
+                    className="text-md px-8 py-4 w-full bg-yellow-500 hover:bg-yellow-600 text-black"
                     disabled={loading}
                   >
                     {loading ? "Signing In..." : "Sign In"}
@@ -186,7 +198,7 @@ export function AuthPage() {
                   />
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-yellow-400 to-purple-600 hover:from-yellow-500 hover:to-purple-700 text-white"
+                    className="text-md px-8 py-4 w-full bg-yellow-500 hover:bg-yellow-600 text-black"
                     disabled={loading}
                   >
                     {loading ? "Creating Account..." : "Create Account"}

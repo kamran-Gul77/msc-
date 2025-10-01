@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Navigation } from "@/components/Elements/Navigation";
 import { Footer } from "@/components/Elements/Footer";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -42,17 +44,17 @@ export default function HomePage() {
               your learning pace and style.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="text-lg px-8 py-6 bg-yellow-500 hover:bg-yellow-600 text-black"
+              <Link
+                href={"/login"}
+                className="text-lg px-8 flex gap-2 item-center align-center py-2 rounded-md  bg-yellow-500 hover:bg-yellow-600 text-black"
               >
-                <MessageCircle className="mr-2 h-5 w-5 text-black" />
+                <MessageCircle className="mr-2 h-5 w-5 mt-1 text-black" />
                 Start Learning Now
-              </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="lg"
-                className="text-lg px-8 py-6 bg-transparent border border-gray-600 text-white hover:bg-gray-800"
+                className="text-lg px-8 hover:text-white py-6 bg-transparent border border-gray-600 text-white hover:bg-gray-800"
               >
                 Watch Demo
               </Button>
@@ -256,12 +258,14 @@ export default function HomePage() {
                 <p className="text-gray-400 mb-6">
                   Join thousands of learners improving their English with AI
                 </p>
-                <Button
-                  size="lg"
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"
-                >
-                  Begin Your Journey
-                </Button>
+                <Link href={"/login"}>
+                  <Button
+                    size="lg"
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"
+                  >
+                    Begin Your Journey
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

@@ -170,7 +170,7 @@ export function Dashboard() {
                 variant="ghost"
                 size="sm"
                 onClick={signOut}
-                className="text-[#fff] hover:text-gray-300"
+                className="text-[#fff] hover:text-black"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -295,11 +295,12 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
                       <span>{stats?.vocabularyAccuracy || 0}%</span>
                     </div>
                     <Progress
+                      color="#333"
                       value={stats?.vocabularyAccuracy || 0}
                       className="h-2"
                     />
@@ -316,7 +317,7 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
                       <span>{stats?.grammarAccuracy || 0}%</span>
                     </div>
@@ -337,7 +338,7 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-white text-sm">
                       <span>Quality Score</span>
                       <span>{stats?.conversationQuality || 0}%</span>
                     </div>
@@ -362,7 +363,7 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button
                     onClick={() => setActiveTab("vocabulary")}
-                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] border border-[#181818]"
+                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] hover:text-white border border-[#181818]"
                     variant="outline"
                   >
                     <BookOpen className="h-6 w-6" />
@@ -371,7 +372,7 @@ export function Dashboard() {
 
                   <Button
                     onClick={() => setActiveTab("grammar")}
-                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] border border-[#181818]"
+                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] border hover:text-white border-[#181818]"
                     variant="outline"
                   >
                     <Target className="h-6 w-6" />
@@ -380,7 +381,7 @@ export function Dashboard() {
 
                   <Button
                     onClick={() => setActiveTab("conversation")}
-                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] border border-[#181818]"
+                    className="h-24 flex-col space-y-2 bg-[#303030] hover:bg-[#212121] text-[#fff] hover:text-white border border-[#181818]"
                     variant="outline"
                   >
                     <MessageCircle className="h-6 w-6" />
@@ -484,7 +485,7 @@ export function Dashboard() {
                   <Button
                     onClick={() => setShowProfileSetup(true)}
                     variant="outline"
-                    className="w-full sm:w-auto bg-[#303030] text-[#fff] border border-[#181818] hover:bg-[#212121]"
+                    className="w-full sm:w-auto bg-[#303030] hover:text-white text-[#fff] border border-[#181818] hover:bg-[#212121]"
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Edit Profile

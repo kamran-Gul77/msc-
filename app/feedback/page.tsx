@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +30,15 @@ import {
   Users,
   Award,
 } from "lucide-react";
-import { useState } from "react";
 import { Navigation } from "@/components/Elements/Navigation";
 import { Footer } from "@/components/Elements/Footer";
+import FeedbackCarousel from "@/components/Feedback/FeedbackCarousel";
 
 export default function FeedbackPage() {
   const [rating, setRating] = useState(0);
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -44,45 +48,88 @@ export default function FeedbackPage() {
     recommend: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission here
-    console.log("Feedback submitted:", { ...formData, rating });
-    alert("Thank you for your feedback! Your input helps us improve linguaAi.");
-  };
-
+  // Handle input change
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Submit feedback
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const payload = { ...formData, rating };
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Thank you for your feedback!");
+        setFormData({
+          name: "",
+          email: "",
+          category: "",
+          experience: "",
+          suggestion: "",
+          recommend: "",
+        });
+        setRating(0);
+        fetchFeedbacks(); // refresh carousel
+      } else {
+        alert("❌ Failed to submit feedback: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch feedbacks for carousel
+  const fetchFeedbacks = async () => {
+    try {
+      const res = await fetch("/api/feedback");
+      const data = await res.json();
+      setFeedbacks(data);
+    } catch (err) {
+      console.error("Failed to load feedbacks:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeedbacks();
+  }, []);
+
+  // Star Rating Component
   const StarRating = ({
     rating,
     setRating,
   }: {
     rating: number;
     setRating: (rating: number) => void;
-  }) => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setRating(star)}
-            className={`text-2xl transition-colors ${
-              star <= rating
-                ? "text-yellow-400"
-                : "text-gray-300 hover:text-yellow-200"
-            }`}
-          >
-            <Star
-              className={`h-6 w-6 ${star <= rating ? "fill-current" : ""}`}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
+  }) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => setRating(star)}
+          className={`text-2xl transition-colors ${
+            star <= rating
+              ? "text-yellow-400"
+              : "text-gray-300 hover:text-yellow-200"
+          }`}
+        >
+          <Star className={`h-6 w-6 ${star <= rating ? "fill-current" : ""}`} />
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#181818]">
@@ -90,6 +137,7 @@ export default function FeedbackPage() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-6xl mx-auto">
+          {/* Page Header */}
           <div className="text-center mb-12">
             <MessageSquare className="h-16 w-16 text-yellow-400 mx-auto mb-6" />
             <h1 className="text-4xl font-bold text-white mb-4">
@@ -101,8 +149,9 @@ export default function FeedbackPage() {
             </p>
           </div>
 
+          {/* Stats + Form */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Feedback Stats */}
+            {/* Stats */}
             <div className="space-y-6">
               <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
@@ -153,44 +202,9 @@ export default function FeedbackPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card className="bg-[#212121] border border-[#303030] text-white">
-                <CardHeader>
-                  <CardTitle className="text-white">
-                    Recent Improvements
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Features added based on user feedback
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    "Enhanced Grammar Explanations",
-                    "Progress Analytics",
-                    "Mobile Optimization",
-                    "Conversation Scenarios",
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{item}</p>
-                        <p className="text-xs text-gray-400">
-                          {item === "Enhanced Grammar Explanations"
-                            ? "Added detailed rule explanations"
-                            : item === "Progress Analytics"
-                            ? "Visual learning progress tracking"
-                            : item === "Mobile Optimization"
-                            ? "Better mobile learning experience"
-                            : "More real-world practice situations"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
             </div>
 
-            {/* Feedback Form */}
+            {/* Form */}
             <div className="lg:col-span-2">
               <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
@@ -204,6 +218,7 @@ export default function FeedbackPage() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Inputs */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-white">
@@ -236,6 +251,7 @@ export default function FeedbackPage() {
                       </div>
                     </div>
 
+                    {/* Rating */}
                     <div className="space-y-2">
                       <Label className="text-white">Overall Rating *</Label>
                       <div className="flex items-center gap-4">
@@ -251,6 +267,7 @@ export default function FeedbackPage() {
                       </div>
                     </div>
 
+                    {/* Category */}
                     <div className="space-y-2">
                       <Label htmlFor="category" className="text-white">
                         Feedback Category
@@ -286,6 +303,7 @@ export default function FeedbackPage() {
                       </Select>
                     </div>
 
+                    {/* Experience */}
                     <div className="space-y-2">
                       <Label htmlFor="experience" className="text-white">
                         What did you like most? *
@@ -303,13 +321,14 @@ export default function FeedbackPage() {
                       />
                     </div>
 
+                    {/* Suggestion */}
                     <div className="space-y-2">
                       <Label htmlFor="suggestion" className="text-white">
                         How can we improve?
                       </Label>
                       <Textarea
                         id="suggestion"
-                        placeholder="Share your suggestions for making linguaAi even better..."
+                        placeholder="Share your suggestions..."
                         rows={4}
                         value={formData.suggestion}
                         onChange={(e) =>
@@ -319,6 +338,7 @@ export default function FeedbackPage() {
                       />
                     </div>
 
+                    {/* Recommend */}
                     <div className="space-y-2">
                       <Label htmlFor="recommend" className="text-white">
                         Would you recommend linguaAi?
@@ -351,27 +371,29 @@ export default function FeedbackPage() {
                       </Select>
                     </div>
 
-                    <div className="bg-[#181818] rounded-lg p-4 border border-[#303030]">
-                      <p className="text-sm text-gray-400">
-                        <strong>Privacy Note:</strong> Your feedback may be used
-                        to improve our service. Personal information will be
-                        kept confidential and used only for follow-up if you
-                        provide contact details.
-                      </p>
-                    </div>
-
                     <Button
                       type="submit"
                       size="lg"
                       className="w-full bg-[#303030] hover:bg-[#212121] text-white border border-[#181818]"
-                      disabled={rating === 0}
+                      disabled={rating === 0 || loading}
                     >
-                      <MessageSquare className="mr-2 h-4 w-4 text-yellow-400" />
-                      Submit Feedback
+                      {loading ? "Submitting..." : "Submit Feedback"}
                     </Button>
                   </form>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+
+          {/* Feedback Carousel */}
+          <div className="mt-16">
+            <div className="flex gap-6 overflow-x-auto pb-4">
+              <FeedbackCarousel />
+              {feedbacks.length === 0 && (
+                <p className="text-gray-400 text-center w-full">
+                  No feedback yet. Be the first!
+                </p>
+              )}
             </div>
           </div>
         </div>
