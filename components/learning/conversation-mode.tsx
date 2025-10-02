@@ -242,6 +242,7 @@ const FeedbackDisplay = ({ message }: { message: Message }) => {
 };
 
 // --- Main Component ---
+const MAX_INPUT_CHARS = 300;
 
 export function ConversationMode({ profile }: ConversationModeProps) {
   const { user } = useAuth();
@@ -1052,7 +1053,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           Back to Scenarios
         </Button>
       </div>
-
       {/* Stats Bar */}
       <div className="flex justify-around items-center p-2 bg-[#212121] border-b border-[#303030] text-sm text-gray-300">
         <span className="flex items-center space-x-1">
@@ -1070,7 +1070,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           <span>Duration: {durationInMinutes}m</span>
         </span>
       </div>
-
       {/* Message Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh] custom-scrollbar">
         {messages.map((message, index) => (
@@ -1111,14 +1110,24 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
         <div ref={messagesEndRef} />
       </div>
-
       {/* Input Area */}
       <div className="p-4 border-t border-[#303030] bg-[#1a1a1a]">
         <div className="flex space-x-3">
           <Textarea
             ref={inputRef}
             value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+
+              // Check if the new value (including pasted text) exceeds the limit
+              if (newValue.length > MAX_INPUT_CHARS) {
+                // Truncate the value to the max characters
+                setInputMessage(newValue.substring(0, MAX_INPUT_CHARS));
+              } else {
+                // Otherwise, set the value as normal
+                setInputMessage(newValue);
+              }
+            }}
             onKeyPress={handleKeyPress}
             placeholder={
               isSessionComplete
@@ -1127,7 +1136,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                 ? "Waiting for AI response..."
                 : "Type your response here..."
             }
-            className="flex-1 h-[20px] bg-[#212121] border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 rounded-xl resize-none"
+            className="flex-1 h-[20px] bg-[#212121] border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 rounded-xl"
             rows={2}
             disabled={isLoading || isSessionComplete}
           />
@@ -1145,6 +1154,10 @@ export function ConversationMode({ profile }: ConversationModeProps) {
               </>
             )}
           </Button>
+        </div>
+        {/* Added character counter for user feedback */}
+        <div className="text-right text-xs text-gray-500 mt-1">
+          {inputMessage.length}/{MAX_INPUT_CHARS} characters
         </div>
       </div>
     </div>
