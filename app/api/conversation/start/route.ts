@@ -57,6 +57,7 @@ const scenarioStarters = {
       "Good morning, colleagues. I appreciate everyone's participation in today's strategic planning session. Shall we begin by reviewing our quarterly objectives?",
   },
 };
+// api/conversation/chat/start route
 
 export async function POST(request: NextRequest) {
   try {

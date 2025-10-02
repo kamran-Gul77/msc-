@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { NextRequest, NextResponse } from "next/server";
-
+// api/conversation/chat/history route
 export async function POST(request: NextRequest) {
   try {
     const { session_id, scenario } = await request.json(); // FIX: scenario not scenario_id
