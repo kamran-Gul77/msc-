@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -78,7 +79,7 @@ export default function FeedbackCarousel() {
             className="flex transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            {feedbacks.map((fb, i) => (
+            {feedbacks?.map((fb, i) => (
               <div key={i} className="w-full flex-shrink-0 px-2">
                 <div className="bg-[#212121] border border-[#303030] rounded-xl p-8 shadow-xl">
                   <div className="flex items-start mb-4">

@@ -362,14 +362,15 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         const parts = currentExercise.sentence.split("_____");
         return (
           <div className="space-y-4">
-            <div className="text-lg text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="text-lg bg-[#181818] text-gray-200 text-center p-4 rounded-lg border border-[#303030]">
               {parts[0]}
-              <span className="inline-block mx-2 px-3 py-1 bg-white border-2 border-dashed border-purple-400 rounded min-w-20 text-center">
+              <span className="inline-block mx-2 px-3 py-1 bg-[#212121] border-2 border-dashed border-yellow-400 rounded min-w-20 text-center">
                 <Input
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
-                  className="border-0  shadow-none p-0 text-center font-medium text-purple-700"
+                  className="bg-transparent border-0 border-none outline-none shadow-none  text-center font-medium text-yellow-300 placeholder-gray-500"
                   placeholder="?"
+                  borderless
                   disabled={showResult}
                 />
               </span>
@@ -381,18 +382,18 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       case "correction":
         return (
           <div className="space-y-4">
-            <div className="text-lg text-center p-4 bg-pink-50 rounded-lg border border-pink-300">
-              <p className="text-pink-700 font-medium mb-2">
+            <div className="text-lg text-center p-4 bg-[#181818] rounded-lg border border-[#303030]">
+              <p className="text-red-400 font-medium mb-2">
                 Incorrect sentence:
               </p>
-              <p className="text-gray-800">{currentExercise.sentence}</p>
+              <p className="text-gray-200">{currentExercise.sentence}</p>
             </div>
             <div>
               <Textarea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 placeholder="Type the corrected sentence here..."
-                className="min-h-20 border-pink-300 focus:border-pink-500 focus:ring-pink-500 text-black"
+                className="min-h-20 bg-[#181818] border border-[#303030] text-gray-200 placeholder-gray-500 focus:border-yellow-400 focus:ring-yellow-400"
                 disabled={showResult}
               />
             </div>
@@ -416,9 +417,11 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 {currentExercise.options.map((option, index) => (
                   <Button
                     key={index}
-                    variant={userAnswer === option ? "default" : "outline"}
-                    className={`h-auto min-h-12 w-full text-left justify-start hover:text-white px-4 py-3 rounded-lg 
-            whitespace-normal break-words transition-all duration-200
+                    variant={userAnswer === option ? "secondary" : "outline"}
+                    className={`h-auto min-h-12 w-full text-left justify-start px-4 py-3 rounded-lg 
+            whitespace-normal  ${
+              userAnswer === option ? " !bg-[#181818] " : "  "
+            } break-words transition-all duration-200
             ${
               showResult
                 ? option === currentExercise.correct_answer
@@ -427,7 +430,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                     option !== currentExercise.correct_answer
                   ? "bg-red-900 border-red-400 text-red-300"
                   : "opacity-60 bg-[#181818] border-[#303030] text-gray-400"
-                : "bg-[#212121] border-[#303030] hover:bg-[#181818] text-gray-200"
+                : "bg-[#212121] border-[#303030] hover:bg-[#181818] text-gray-200 hover:text-white"
             }`}
                     onClick={() => !showResult && setUserAnswer(option)}
                     disabled={showResult}
@@ -636,7 +639,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 <CardContent className="space-y-6">
                   {/* Grammar Rule */}
                   {currentExercise.grammar_rule && (
-                    <div className="text-center p-4 bg-[#181818] rounded-lg border border-[#303030]">
+                    <div className="text-center p-4 bg-[#212121] rounded-lg border border-[#303030]">
                       <div className="flex items-center justify-center space-x-2 mb-2">
                         <BookOpen className="h-5 w-5 text-yellow-400" />
                         <span className="font-medium text-yellow-400">
@@ -698,7 +701,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                       <Button
                         onClick={handleAnswer}
                         disabled={!userAnswer.trim() || loading}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white min-w-32"
+                        className="bg-[#121212] text-white min-w-32"
                       >
                         {loading ? "Checking..." : "Check Answer"}
                       </Button>
@@ -706,7 +709,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                       <Button
                         onClick={() => generateNewExercise()}
                         disabled={loading}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white min-w-32"
+                        className="bg-[#121212] text-white min-w-32"
                       >
                         Next Exercise
                       </Button>

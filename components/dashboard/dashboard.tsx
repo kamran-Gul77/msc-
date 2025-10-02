@@ -32,8 +32,9 @@ import { GrammarMode } from "@/components/learning/grammar-mode";
 import { ConversationMode } from "@/components/learning/conversation-mode";
 import { ProfileSetup } from "@/components/profile/profile-setup";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   display_name?: string;
   proficiency_level: string;
@@ -145,11 +146,13 @@ export function Dashboard() {
       {/* Header */}
       <div className="bg-[#212121] backdrop-blur-sm border-b border-[#303030] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <Brain className="h-8 w-8 text-[#fff]" />
-              <h1 className="text-2xl font-bold text-[#fff]">LinguaAI</h1>
-            </div>
+          <div className="flex  items-center justify-between h-16">
+            <Link href={"/"}>
+              <div className="flex items-center space-x-3">
+                <Brain className="h-8 w-8 text-[#fff]" />
+                <h1 className="text-2xl font-bold text-[#fff]">LinguaAI</h1>
+              </div>
+            </Link>
 
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex items-center space-x-2 bg-[#303030] px-3 py-1 rounded-full">

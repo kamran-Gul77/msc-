@@ -21,6 +21,7 @@ import { Navigation } from "@/components/Elements/Navigation";
 import { Footer } from "@/components/Elements/Footer";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import FeedbackCarousel from "@/components/Feedback/FeedbackCarousel";
 
 export default function HomePage() {
   return (
@@ -208,7 +209,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <div className="mt-2">
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          <FeedbackCarousel />
+        </div>
+      </div>
       {/* Benefits Section */}
       <section className="py-20 bg-[#1E1E1E]/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
