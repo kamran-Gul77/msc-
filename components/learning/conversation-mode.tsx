@@ -31,6 +31,9 @@ import {
   Plus,
   Zap,
   AlertTriangle,
+  ClipboardCheck,
+  ClipboardCopy,
+  Loader2, // Added Loader2 for loading animation
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
@@ -132,6 +135,112 @@ const initialCustomScenarioState: CustomScenarioFormState = {
   difficulty: "beginner",
 };
 
+// --- Helper Components (Inline for single file) ---
+
+// NEW: Typing Indicator Component
+const TypingIndicator = () => (
+  <div className="flex items-center space-x-3 w-fit p-3 rounded-xl rounded-bl-none bg-[#303030] shadow-lg">
+    <Bot className="h-5 w-5 flex-shrink-0 text-purple-400" />
+    <span className="text-gray-300">AI is thinking...</span>
+    <div className="flex items-center space-x-1 ml-4">
+      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-100"></div>
+      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-200"></div>
+      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-300"></div>
+    </div>
+  </div>
+);
+
+const FeedbackDisplay = ({ message }: { message: Message }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (text: string) => {
+    // Using execCommand for better iFrame compatibility
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text", err);
+    }
+    document.body.removeChild(textarea);
+  };
+
+  if (message.isUser) {
+    if (message.feedback_score !== undefined) {
+      const score = message.feedback_score;
+      const scoreClass =
+        score >= 4
+          ? "bg-green-600"
+          : score >= 2.5
+          ? "bg-yellow-600"
+          : "bg-red-600";
+      return (
+        <div className="flex items-center space-x-2 mt-1 justify-end">
+          <Badge className={`text-xs ${scoreClass} text-white font-bold`}>
+            Score: {score.toFixed(1)}/5.0
+          </Badge>
+        </div>
+      );
+    }
+    return null;
+  } else {
+    // AI message: show correction for the previous user message
+    if (message.corrected && message.corrected !== "SESSION ENDED") {
+      return (
+        <div className="mt-2 p-3 bg-[#181818] border border-green-700/50 rounded-lg space-y-2">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-semibold text-green-400">
+              <ClipboardCheck className="inline h-4 w-4 mr-1" />
+              Correction
+            </h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-16 text-xs text-green-400 hover:bg-green-900/50"
+              onClick={() => handleCopy(message.corrected || "")}
+              title="Copy Corrected Text"
+            >
+              {copied ? (
+                <ClipboardCheck className="h-4 w-4 mr-1" />
+              ) : (
+                <ClipboardCopy className="h-4 w-4 mr-1" />
+              )}
+              {copied ? "Copied!" : "Copy"}
+            </Button>
+          </div>
+          <p className="text-sm italic text-green-200">{message.corrected}</p>
+          {message.correction_explanation && (
+            <p className="text-xs text-gray-400 pt-1 border-t border-green-900/50">
+              <span className="font-medium text-gray-300">Explanation:</span>{" "}
+              {message.correction_explanation}
+            </p>
+          )}
+        </div>
+      );
+    } else if (message.corrected === "SESSION ENDED") {
+      return (
+        <div className="mt-2 p-3 bg-red-900/30 border border-red-700/50 rounded-lg space-y-2">
+          <h4 className="text-sm font-semibold text-red-400">
+            <AlertTriangle className="inline h-4 w-4 mr-1" />
+            Session Status
+          </h4>
+          <p className="text-sm text-red-200">{message.content}</p>
+          {message.correction_explanation && (
+            <p className="text-xs text-gray-400 pt-1 border-t border-red-900/50">
+              {message.correction_explanation}
+            </p>
+          )}
+        </div>
+      );
+    }
+  }
+  return null;
+};
+
 // --- Main Component ---
 
 export function ConversationMode({ profile }: ConversationModeProps) {
@@ -159,7 +268,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   const [customScenarioForm, setCustomScenarioForm] =
     useState<CustomScenarioFormState>(initialCustomScenarioState);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null); // Changed to Textarea ref for better input
 
   const supabase = createClient();
 
@@ -171,7 +280,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   // Scroll to bottom on new message
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]); // Added isLoading to dependencies to scroll when the indicator appears/disappears
 
   // Focus input when scenario is selected
   useEffect(() => {
@@ -372,15 +481,16 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       ...prev,
       {
         id: "system-complete",
-        content: `Session complete! You reached the message limit of ${
-          MESSAGE_LIMIT / 2
-        } exchanges. Final Score: ${finalAverageScore.toFixed(
-          1
-        )}. Click 'Back to Scenarios' to choose a new one.`,
+        content: `You completed the **${
+          selectedScenario?.title || "current"
+        }** scenario! You exchanged ${
+          sessionStats.messageCount
+        } messages. Final average score: ${finalAverageScore.toFixed(1)}/5.0.`,
         isUser: false,
         timestamp: new Date(),
         corrected: "SESSION ENDED",
-        correction_explanation: "Stats and Achievement saved.",
+        correction_explanation:
+          "Stats and Achievement saved. Click 'Back to Scenarios' to choose a new one.",
       },
     ]);
   };
@@ -412,7 +522,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         setSessionId(existingSession.id);
         setStoredDurationSeconds(existingSession.duration || 0);
 
-        // Reconstruct total score from avg score * count, if available
+        // Score is stored as (Avg Score * 10) in the DB.
         const messageCount = existingSession.exercises_completed || 0;
         const totalUserScore =
           messageCount > 0 ? (existingSession.score / 10) * messageCount : 0;
@@ -423,6 +533,11 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         });
 
         await loadConversation(existingSession.id); // Load the messages
+
+        if (messageCount * 2 >= MESSAGE_LIMIT) {
+          setIsSessionComplete(true);
+        }
+
         return;
       }
 
@@ -465,7 +580,20 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       });
     } catch (error) {
       console.error("Error starting conversation:", error);
-      alert("Failed to start conversation. See console for details.");
+      // Use custom alert replacement
+      const alertMessage =
+        "Failed to start conversation. Please check the console for details.";
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-error-${Date.now()}`,
+          content: alertMessage,
+          isUser: false,
+          timestamp: new Date(),
+          corrected: "ERROR",
+          correction_explanation: "Database or network failure.",
+        },
+      ]);
     }
   };
 
@@ -489,7 +617,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
-    setIsLoading(true);
+    setIsLoading(true); // START LOADING
 
     try {
       const nextMessageCount = sessionStats.messageCount + 1;
@@ -513,11 +641,14 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       const data = await response.json();
       const ai = data.ai || {};
 
-      const aiResponse = ai.ai_reply || "⚠️ No reply";
+      const aiResponse =
+        ai.ai_reply || "⚠️ No reply from AI partner. Try again.";
       const correctedText = ai.corrected_text || null;
       const correctionExplanation = ai.correction_explanation || null;
       const contextSummary = ai.context_summary || null;
-      const feedbackScore = ai.feedback_score || null;
+      // Ensure feedbackScore is a number, defaulting to 0 if null/undefined
+      const feedbackScore =
+        typeof ai.feedback_score === "number" ? ai.feedback_score : 0;
 
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
@@ -528,25 +659,26 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         timestamp: new Date(),
       };
 
-      setMessages((prev) => {
-        // Update user message with score, then add AI message
-        const updatedMessages = [...prev];
-        const lastUserMessage = updatedMessages[updatedMessages.length - 1];
-        if (lastUserMessage.isUser) {
-          lastUserMessage.feedback_score = feedbackScore;
-        }
-        return [...updatedMessages, aiMessage];
-      });
-
-      // 2. Update stats and DB
+      // 2. Update stats and local state
       const newMessageCount = sessionStats.messageCount + 1;
-      const newTotalScore = sessionStats.totalUserScore + (feedbackScore || 0);
+      const newTotalScore = sessionStats.totalUserScore + feedbackScore;
 
       const currentAvgScore = newTotalScore / newMessageCount;
 
       setSessionStats({
         messageCount: newMessageCount,
         totalUserScore: newTotalScore,
+      });
+
+      setMessages((prev) => {
+        // Update the last message (the user's) with the received feedback score
+        const updatedMessages = [...prev];
+        const lastUserMessage = updatedMessages[updatedMessages.length - 1];
+        if (lastUserMessage.isUser) {
+          lastUserMessage.feedback_score = feedbackScore;
+        }
+        // Add the new AI message
+        return [...updatedMessages, aiMessage];
       });
 
       // Calculate time spent in THIS viewing session so far
@@ -581,7 +713,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         .update({
           exercises_completed: newMessageCount,
           duration: currentTotalDuration, // Save the cumulative duration
-          score: Math.round(currentAvgScore * 10), // Save the new average score
+          score: Math.round(currentAvgScore * 10), // Save the new average score (multiplied by 10 for integer storage if needed)
         })
         .eq("id", sessionId);
 
@@ -594,13 +726,25 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Error processing message. See console for details.");
+      // Use custom alert replacement
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-error-${Date.now()}`,
+          content:
+            "❌ Failed to send message or process AI response. Please try again.",
+          isUser: false,
+          timestamp: new Date(),
+          corrected: "ERROR",
+          correction_explanation: "Network or API error.",
+        },
+      ]);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // END LOADING
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -624,7 +768,19 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     const { title, description, context, difficulty } = customScenarioForm;
 
     if (!title || !context || !difficulty) {
-      alert("Title, Context, and Difficulty are required.");
+      // Use a temporary system message instead of alert
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-validation-${Date.now()}`,
+          content:
+            "Title, Context, and Difficulty are required for a custom scenario.",
+          isUser: false,
+          timestamp: new Date(),
+          corrected: "Input Validation Error",
+          correction_explanation: "Please fill in all required fields.",
+        },
+      ]);
       return;
     }
 
@@ -656,7 +812,19 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       startConversation(newScenario); // Start immediately
     } catch (error) {
       console.error("Error creating custom scenario:", error);
-      alert("Failed to save custom scenario. See console for details.");
+      // Use a temporary system message instead of alert
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `system-creation-error-${Date.now()}`,
+          content: "❌ Failed to save custom scenario. Please try again.",
+          isUser: false,
+          timestamp: new Date(),
+          corrected: "DB Error",
+          correction_explanation:
+            "See console for details on scenario creation failure.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -689,7 +857,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   if (!selectedScenario) {
     return (
       <div className="space-y-6">
-        <Card className="text-center bg-[#212121] border border-[#303030] text-[#fff]">
+        <Card className="text-center bg-[#212121] border border-[#303030] text-[#fff] rounded-xl">
           <CardHeader>
             <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <CardTitle className="text-2xl text-[#fff]">
@@ -706,7 +874,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         <Button
           onClick={() => setShowCustomForm(!showCustomForm)}
           variant="outline"
-          className="w-full bg-[#303030] hover:bg-[#999] text-[#fff] border border-[#181818] flex items-center justify-center"
+          className="w-full bg-[#303030] hover:bg-[#404040] text-[#fff] border border-[#181818] flex items-center justify-center transition-all duration-300 rounded-xl"
         >
           <Plus className="h-4 w-4 mr-2" />
           {showCustomForm
@@ -716,7 +884,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
         {/* Custom Scenario Creation Form */}
         {showCustomForm && (
-          <Card className="bg-[#181818] border border-[#303030]">
+          <Card className="bg-[#181818] border border-[#303030] rounded-xl">
             <CardHeader>
               <CardTitle className="text-xl text-[#fff]">
                 Create Your Own Scenario
@@ -739,7 +907,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                       value={customScenarioForm.title}
                       onChange={handleCustomFormChange}
                       placeholder="e.g., Calling a Landlord"
-                      className="bg-[#212121] border-gray-600 text-[#fff]"
+                      className="bg-[#212121] border-gray-600 text-[#fff] focus:border-blue-500 rounded-lg"
                       disabled={isLoading}
                     />
                   </div>
@@ -759,10 +927,10 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                       }
                       disabled={isLoading}
                     >
-                      <SelectTrigger className="w-full bg-[#212121] border-gray-600 text-[#fff]">
+                      <SelectTrigger className="w-full bg-[#212121] border-gray-600 text-[#fff] focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Select Difficulty" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#212121] border-gray-600 text-[#fff]">
+                      <SelectContent className="bg-[#212121] border-gray-600 text-[#fff] rounded-lg">
                         <SelectItem value="beginner">Beginner</SelectItem>
                         <SelectItem value="intermediate">
                           Intermediate
@@ -782,7 +950,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                     value={customScenarioForm.description}
                     onChange={handleCustomFormChange}
                     placeholder="Briefly describe the goal"
-                    className="bg-[#212121] border-gray-600 text-[#fff]"
+                    className="bg-[#212121] border-gray-600 text-[#fff] focus:border-blue-500 rounded-lg"
                     disabled={isLoading}
                   />
                 </div>
@@ -796,12 +964,16 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                     value={customScenarioForm.context}
                     onChange={handleCustomFormChange}
                     placeholder="e.g., You are a strict librarian helping the user find a very specific book from 1850."
-                    className="bg-[#212121] border-gray-600 text-[#fff]"
+                    className="bg-[#212121] border-gray-600 text-[#fff] focus:border-blue-500 rounded-lg"
                     rows={3}
                     disabled={isLoading}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Saving..." : "Save & Start Conversation"}
                 </Button>
               </form>
@@ -817,45 +989,41 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           {getFilteredScenarios().map((scenario) => (
             <Card
               key={scenario.id}
-              className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] border ${
+              className={`cursor-pointer transition-all duration-300 rounded-xl ${
                 scenario.is_custom
-                  ? "border-purple-600 bg-[#2b213b]" // Custom color for easy spotting
-                  : "border-[#303030] bg-[#212121]"
-              } hover:bg-[#303030]`}
+                  ? "bg-[#211e30] border-purple-500 hover:border-purple-300"
+                  : "bg-[#212121] border-[#303030] hover:border-blue-500"
+              } hover:shadow-lg`}
               onClick={() => startConversation(scenario)}
             >
               <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <CardTitle className="text-lg text-[#fff] flex items-center space-x-2">
-                    {scenario.is_custom && (
-                      <Zap className="h-4 w-4 text-purple-400" />
-                    )}
-                    <span>{scenario.title}</span>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg text-[#fff]">
+                    {scenario.title}
                   </CardTitle>
                   <Badge
-                    variant="outline"
-                    className={`${
+                    className={`text-xs capitalize ${
                       scenario.difficulty === "beginner"
-                        ? "border-green-400 text-green-400"
+                        ? "bg-green-600"
                         : scenario.difficulty === "intermediate"
-                        ? "border-yellow-400 text-yellow-400"
-                        : "border-red-400 text-red-400"
+                        ? "bg-yellow-600"
+                        : "bg-red-600"
                     }`}
                   >
                     {scenario.difficulty}
                   </Badge>
                 </div>
-                <CardDescription className="text-left text-gray-400">
+                {scenario.is_custom && (
+                  <Badge className="bg-purple-600 text-white w-fit text-xs">
+                    Custom
+                  </Badge>
+                )}
+                <CardDescription className="text-gray-400 mt-2">
                   {scenario.description}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-500 mb-4 truncate">
-                  Context: {scenario.context}
-                </p>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-[#fff]">
-                  Start Conversation
-                </Button>
+              <CardContent className="text-sm text-gray-500 italic pt-0">
+                AI Role: {scenario.context.substring(0, 50)}...
               </CardContent>
             </Card>
           ))}
@@ -865,217 +1033,120 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   }
 
   // --- Render Conversation Mode ---
-
   return (
-    <div className="space-y-6 max-w-4xl mx-auto text-[#fff]">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            className="px-4 py-2 bg-[#303030] hover:text-white hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
-            onClick={() => {
-              setSelectedScenario(null);
-              setSessionId(null);
-              setIsSessionComplete(false);
-            }}
-          >
-            ← Back to Scenarios
-          </Button>
-          <div>
-            <h2 className="text-xl font-semibold text-[#fff]">
-              {selectedScenario.title}
-              {selectedScenario.is_custom && (
-                <Zap className="h-4 w-4 inline-block ml-2 text-purple-400" />
-              )}
-            </h2>
-            <p className="text-gray-400 text-sm">
-              {selectedScenario.description}
-            </p>
-          </div>
+    <div className="flex flex-col h-full rounded-xl overflow-hidden bg-[#121212] border border-[#303030] shadow-2xl">
+      {/* Header Bar */}
+      <div className="flex justify-between items-center p-4 border-b border-[#303030] bg-[#1a1a1a]">
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-white">
+            {selectedScenario.title}
+          </h1>
+          <p className="text-sm text-gray-400">{selectedScenario.context}</p>
         </div>
-
-        <Badge
-          variant="outline"
-          className={`capitalize border ${
-            selectedScenario.difficulty === "beginner"
-              ? "border-green-400 text-green-400"
-              : selectedScenario.difficulty === "intermediate"
-              ? "border-yellow-400 text-yellow-400"
-              : "border-red-400 text-red-400"
-          }`}
+        <Button
+          onClick={() => setSelectedScenario(null)}
+          variant="secondary"
+          className="bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+          disabled={isLoading}
         >
-          {selectedScenario.difficulty}
-        </Badge>
+          Back to Scenarios
+        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-[#212121] border border-[#303030]">
-          <CardContent className="p-4 text-center">
-            <MessageCircle className="h-6 w-6 text-gray-300 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-[#fff]">
-              {sessionStats.messageCount} / {MESSAGE_LIMIT / 2}
-            </p>
-            <p className="text-sm text-gray-400">Exchanges</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#212121] border border-[#303030]">
-          <CardContent className="p-4 text-center">
-            <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-[#fff]">
-              {averageScore.toFixed(1)}
-            </p>
-            <p className="text-sm text-gray-400">Avg Score</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#212121] border border-[#303030]">
-          <CardContent className="p-4 text-center">
-            <Clock className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-[#fff]">
-              {durationInMinutes} m
-            </p>
-            <p className="text-sm text-gray-400">Duration (Cumulative)</p>
-          </CardContent>
-        </Card>
+      {/* Stats Bar */}
+      <div className="flex justify-around items-center p-2 bg-[#212121] border-b border-[#303030] text-sm text-gray-300">
+        <span className="flex items-center space-x-1">
+          <Zap className="h-4 w-4 text-yellow-400" />
+          <span>Turns: {sessionStats.messageCount}</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <Star className="h-4 w-4 text-green-400" />
+          <span>
+            Avg Score: {averageScore > 0 ? averageScore.toFixed(1) : "N/A"}
+          </span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <Clock className="h-4 w-4 text-blue-400" />
+          <span>Duration: {durationInMinutes}m</span>
+        </span>
       </div>
 
-      {/* Chat Interface */}
-      <Card className="h-[500px] bg-[#212121] border border-[#303030] flex flex-col">
-        <CardHeader className="pb-3 border-b border-[#303030]">
-          <div className="flex items-center space-x-2">
-            <Bot className="h-5 w-5 text-gray-300" />
-            <span className="font-medium text-[#fff]">
-              AI Conversation Partner
-            </span>
+      {/* Message Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh] custom-scrollbar">
+        {messages.map((message, index) => (
+          <div
+            key={message.id}
+            className={`flex ${
+              message.isUser ? "justify-end" : "justify-start"
+            }`}
+          >
             <div
-              className={`w-2 h-2 rounded-full ml-auto ${
-                isSessionComplete ? "bg-red-500" : "bg-green-400"
+              className={`max-w-[80%] rounded-xl shadow-lg p-3 ${
+                message.isUser
+                  ? "bg-blue-600 text-white rounded-br-none"
+                  : "bg-[#303030] text-gray-100 rounded-tl-none"
               }`}
-            ></div>
+            >
+              <div className="flex items-center space-x-2 mb-1">
+                {message.isUser ? (
+                  <User className="h-4 w-4 text-white" />
+                ) : (
+                  <Bot className="h-4 w-4 text-purple-400" />
+                )}
+                <span className="font-semibold text-sm">
+                  {message.isUser ? "You" : "AI Partner"}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {message.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+              <p className="whitespace-pre-wrap">{message.content}</p>
+              <FeedbackDisplay message={message} />
+            </div>
           </div>
-        </CardHeader>
+        ))}
 
-        <CardContent className="flex-1 flex flex-col p-4 overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.isUser ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${
-                    message.isUser ? "flex-row-reverse space-x-reverse" : ""
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                      message.isUser ? "bg-[#303030]" : "bg-[#181818]"
-                    }`}
-                  >
-                    {message.isUser ? (
-                      <User className="h-4 w-4 text-gray-200" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-gray-200" />
-                    )}
-                  </div>
+        {/* CONDITIONALLY RENDER LOADING INDICATOR */}
+        {isLoading && <TypingIndicator />}
 
-                  <div
-                    className={`rounded-lg px-4 py-2 ${
-                      message.isUser
-                        ? "bg-[#303030] text-[#fff]"
-                        : "bg-[#181818] text-[#fff]"
-                    }`}
-                  >
-                    {/* User message feedback */}
-                    {message.isUser && message.feedback_score !== undefined && (
-                      <div className="flex items-center space-x-1 mb-2">
-                        <Star className="h-3 w-3 text-yellow-400" />
-                        <span className="text-xs text-yellow-300 font-semibold">
-                          Score: {message.feedback_score}/10
-                        </span>
-                      </div>
-                    )}
+        <div ref={messagesEndRef} />
+      </div>
 
-                    {/* AI message correction */}
-                    {message.corrected && (
-                      <div className="mb-2 p-2 rounded bg-green-900/50 border border-green-700">
-                        <p className="text-sm text-green-400 font-semibold mb-1">
-                          <span className="text-green-500">Correct: </span>
-                          {message.corrected}
-                        </p>
-                        {message.correction_explanation && (
-                          <p className="text-xs text-green-500 italic">
-                            {message.correction_explanation}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    <p
-                      className={`text-sm ${
-                        message.isUser ? "text-gray-100" : "text-gray-300"
-                      }`}
-                    >
-                      {message.content}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="flex items-start space-x-2 max-w-xs lg:max-w-md">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium bg-[#181818]">
-                    <Bot className="h-4 w-4 text-gray-200" />
-                  </div>
-                  <div className="rounded-lg px-4 py-2 bg-[#181818] text-[#fff] animate-pulse">
-                    <span className="text-sm text-gray-400">
-                      AI is typing...
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Box */}
-          <div className="mt-auto pt-4 border-t border-[#303030]">
-            {isSessionComplete ? (
-              <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-center">
-                <AlertTriangle className="h-5 w-5 inline-block mr-2" />
-                This session is complete. Please return to the scenarios list to
-                start a new one.
-              </div>
+      {/* Input Area */}
+      <div className="p-4 border-t border-[#303030] bg-[#1a1a1a]">
+        <div className="flex space-x-3">
+          <Textarea
+            ref={inputRef}
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={
+              isSessionComplete
+                ? "Session complete. Click 'Back to Scenarios' to start a new one."
+                : isLoading
+                ? "Waiting for AI response..."
+                : "Type your response here..."
+            }
+            className="flex-1 h-[20px] bg-[#212121] border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 rounded-xl resize-none"
+            rows={2}
+            disabled={isLoading || isSessionComplete}
+          />
+          <Button
+            onClick={sendMessage}
+            className="self-end bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-full w-20 flex flex-col justify-center items-center"
+            disabled={isLoading || isSessionComplete || !inputMessage.trim()}
+          >
+            {isLoading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
-              <div className="flex space-x-3">
-                <Input
-                  ref={inputRef}
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your reply here..."
-                  className="flex-1 bg-[#181818] border-gray-600 text-[#fff] focus-visible:ring-blue-500"
-                  disabled={isLoading}
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-[#fff] flex items-center"
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </div>
+              <>
+                <Send className="h-5 w-5" />
+                <span className="text-xs mt-1">Send</span>
+              </>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
