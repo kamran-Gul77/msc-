@@ -23,7 +23,7 @@ interface VocabularyRequest {
  * 🔹 Helper: Generate new question using Gemini
  */
 async function generateUniqueAIQuestion(level: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   // Step 1: Fetch all existing words for this level
   const { data: existingWords, error } = await supabase
