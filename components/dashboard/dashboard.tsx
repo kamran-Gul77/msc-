@@ -50,6 +50,8 @@ interface UserStats {
   conversationQuality: number;
   currentStreak: number;
   totalTimeSpent: number;
+  totalPoints: number;
+  currentLevel: number;
 }
 
 export function Dashboard() {
@@ -65,7 +67,7 @@ export function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchUserProfile();
-      fetchUserStats();
+      fetchStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -95,33 +97,12 @@ export function Dashboard() {
     }
   };
 
-  const fetchUserStats = async () => {
-    try {
-      // Fetch learning sessions count
-      const { data: sessions } = await supabase
-        .from("learning_sessions")
-        .select("id")
-        .eq("user_id", user?.id);
-
-      // Fetch latest analytics
-      const { data: analytics } = await supabase
-        .from("learning_analytics")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("date", { ascending: false })
-        .limit(1);
-
-      setStats({
-        totalSessions: sessions?.length || 0,
-        vocabularyAccuracy: analytics?.[0]?.vocabulary_accuracy || 0,
-        grammarAccuracy: analytics?.[0]?.grammar_accuracy || 0,
-        conversationQuality: analytics?.[0]?.conversation_quality || 0,
-        currentStreak: analytics?.[0]?.current_streak || 0,
-        totalTimeSpent: analytics?.[0]?.total_time_spent || 0,
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
+  const fetchStats = async () => {
+    const { data, error } = await supabase.rpc("get_dashboard_stats", {
+      uid: user?.id,
+    });
+    if (error) throw error;
+    setStats(data[0]); // since RPC returns an array
   };
 
   const handleProfileComplete = (newProfile: UserProfile) => {
@@ -158,14 +139,14 @@ export function Dashboard() {
               <div className="hidden sm:flex items-center space-x-2 bg-[#303030] px-3 py-1 rounded-full">
                 <Trophy className="h-4 w-4 text-yellow-500" />
                 <span className="text-sm font-medium">
-                  {profile?.total_points || 0} points
+                  {stats?.totalPoints || 0} points
                 </span>
               </div>
 
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-sm text-[#fff]">
-                  Level {profile?.current_level || 1}
+                  Level {stats?.currentLevel || 1}
                 </span>
               </div>
 
@@ -264,7 +245,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Total Points</p>
                       <p className="text-3xl font-bold">
-                        {profile?.total_points || 0}
+                        {stats?.totalPoints || 0}
                       </p>
                     </div>
                     <Trophy className="h-8 w-8 text-gray-400" />
@@ -276,9 +257,9 @@ export function Dashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400">Time Studied</p>
+                      <p className="text-sm text-gray-400">Current Level</p>
                       <p className="text-3xl font-bold">
-                        {Math.round((stats?.totalTimeSpent || 0) / 60)}h
+                        {stats?.currentLevel}
                       </p>
                     </div>
                     <Award className="h-8 w-8 text-gray-400" />

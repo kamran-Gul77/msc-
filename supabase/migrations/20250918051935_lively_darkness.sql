@@ -93,6 +93,9 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
 CREATE TABLE public.achievements (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -103,6 +106,17 @@ CREATE TABLE public.achievements (
   earned_at timestamp with time zone DEFAULT now(),
   CONSTRAINT achievements_pkey PRIMARY KEY (id),
   CONSTRAINT achievements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
+);
+CREATE TABLE public.conversation_scenarios (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  title text NOT NULL,
+  description text,
+  context text NOT NULL,
+  difficulty text DEFAULT 'beginner'::text CHECK (difficulty = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT conversation_scenarios_pkey PRIMARY KEY (id),
+  CONSTRAINT conversation_scenarios_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
 CREATE TABLE public.conversations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -116,8 +130,23 @@ CREATE TABLE public.conversations (
   corrected_text text,
   correction_explanation text,
   context_summary text,
+  mode text DEFAULT 'conversation'::text CHECK (mode = ANY (ARRAY['conversation'::text, 'grammar'::text, 'vocabulary'::text])),
   CONSTRAINT conversations_pkey PRIMARY KEY (id),
   CONSTRAINT conversations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+);
+CREATE TABLE public.feedback (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  name text,
+  email text,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  category text,
+  experience text NOT NULL,
+  suggestion text,
+  recommend text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
 CREATE TABLE public.grammar_exercises (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -131,8 +160,24 @@ CREATE TABLE public.grammar_exercises (
   feedback text,
   time_taken integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
+  options jsonb DEFAULT '[]'::jsonb,
+  blank_position integer,
+  user_id uuid,
+  proficiency_level text DEFAULT 'beginner'::text CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
   CONSTRAINT grammar_exercises_pkey PRIMARY KEY (id),
   CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+);
+CREATE TABLE public.grammar_pool (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  sentence text NOT NULL,
+  exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['correction'::text, 'fill_blank'::text, 'quiz'::text])),
+  correct_answer text NOT NULL,
+  grammar_rule text,
+  feedback text,
+  options jsonb DEFAULT '[]'::jsonb,
+  blank_position integer,
+  CONSTRAINT grammar_pool_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.learning_analytics (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -158,6 +203,7 @@ CREATE TABLE public.learning_sessions (
   difficulty_level text DEFAULT 'beginner'::text CHECK (difficulty_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
   created_at timestamp with time zone DEFAULT now(),
   scenario text,
+  is_completed boolean DEFAULT false,
   CONSTRAINT learning_sessions_pkey PRIMARY KEY (id),
   CONSTRAINT learning_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
@@ -184,6 +230,23 @@ CREATE TABLE public.vocabulary_exercises (
   is_correct boolean DEFAULT false,
   time_taken integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  options jsonb DEFAULT '[]'::jsonb,
+  example_sentence text,
+  proficiency_level text,
+  pool_id uuid,
   CONSTRAINT vocabulary_exercises_pkey PRIMARY KEY (id),
-  CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+  CONSTRAINT vocabulary_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id),
+  CONSTRAINT vocabulary_exercises_pool_id_fkey FOREIGN KEY (pool_id) REFERENCES public.vocabulary_pool(id)
+);
+CREATE TABLE public.vocabulary_pool (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  word text NOT NULL UNIQUE,
+  exercise_type text NOT NULL CHECK (exercise_type = ANY (ARRAY['synonym'::text, 'antonym'::text, 'context'::text, 'recognition'::text])),
+  correct_answer text NOT NULL,
+  options jsonb DEFAULT '[]'::jsonb,
+  example_sentence text,
+  proficiency_level text NOT NULL CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT vocabulary_pool_pkey PRIMARY KEY (id)
 );

@@ -55,20 +55,36 @@ export function GrammarMode({ profile }: GrammarModeProps) {
   const [userAnswer, setUserAnswer] = useState<string>("");
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [score, setScore] = useState(0);
-  const [sessionStats, setSessionStats] = useState({
-    total: 0,
-    correct: 0,
-    timeSpent: 0,
-  });
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [history, setHistory] = useState<GrammarExercise[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showStarter, setShowStarter] = useState(true);
-
+  const [stats, setStats] = useState<{
+    total_exercises: number;
+    total_correct: number;
+    total_points: number;
+  } | null>(null);
   const supabase = createClient();
+
+  async function fetchGrammarStats() {
+    if (!user?.id) return;
+    try {
+      const resp = await fetch("/api/grammar/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const result = await resp.json();
+      setStats(result.stats); // { total_exercises, total_correct, total_points }
+    } catch (err) {
+      console.error("fetchGrammarStats error:", err);
+    }
+  }
+  useEffect(() => {
+    fetchGrammarStats();
+  }, [user?.id]);
 
   const startNewSession = async () => {
     try {
@@ -146,160 +162,69 @@ export function GrammarMode({ profile }: GrammarModeProps) {
     }
   };
 
-  // const handleAnswer = async () => {
-  //   if (!userAnswer.trim() || !currentExercise || !sessionId) return;
-
-  //   try {
-  //     setLoading(true);
-
-  //     // Call the backend to check the answer
-  //     const response = await fetch("/api/grammar/generate", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         session_id: sessionId,
-  //         exerciseId: currentExercise.id, // note: camelCase matches backend
-  //         user_id: user?.id,
-
-  //         userAnswer: userAnswer, // matches backend
-  //       }),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errData = await response.json();
-  //       throw new Error(errData.error || "Failed to submit answer");
-  //     }
-
-  //     const result = await response.json();
-
-  //     setIsCorrect(result.correct);
-  //     setShowResult(true);
-
-  //     // Merge result into current exercise
-  //     setCurrentExercise((prev) =>
-  //       prev
-  //         ? {
-  //             ...prev,
-  //             user_answer: userAnswer,
-  //             is_correct: result.correct,
-  //             correct_answer: result.correctAnswer,
-  //             feedback: result.feedback,
-  //           }
-  //         : prev
-  //     );
-
-  //     const timeSpent = startTime
-  //       ? Math.round((Date.now() - startTime.getTime()) / 1000)
-  //       : 0;
-
-  //     // Update stats
-  //     const newStats = {
-  //       total: sessionStats.total + 1,
-  //       correct: sessionStats.correct + (result.correct ? 1 : 0),
-  //       timeSpent: sessionStats.timeSpent + timeSpent,
-  //     };
-  //     setSessionStats(newStats);
-
-  //     if (result.correct) setScore((s) => s + 15);
-
-  //     // Update session in Supabase
-  //     await supabase
-  //       .from("learning_sessions")
-  //       .update({
-  //         score: score + (result.correct ? 15 : 0),
-  //         exercises_completed: newStats.total,
-  //         duration: newStats.timeSpent,
-  //       })
-  //       .eq("id", sessionId);
-  //   } catch (err) {
-  //     console.error("Error submitting answer:", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleAnswer = async () => {
-    if (!userAnswer.trim() || !currentExercise || !sessionId) return;
+    if (!userAnswer.trim() || !currentExercise || !sessionId || !user?.id)
+      return;
+
+    setLoading(true);
 
     try {
-      setLoading(true);
+      const start = startTime ? startTime.getTime() : Date.now();
+      const timeSpent = Math.round((Date.now() - start) / 1000);
 
-      const response = await fetch("/api/grammar/generate", {
+      // 🔹 Submit answer → grammar API
+      const res = await fetch("/api/grammar/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionId,
           exerciseId: currentExercise.id,
-          user_id: user?.id,
-          userAnswer: userAnswer,
+          user_id: user.id,
+          userAnswer,
         }),
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "failed to sumbit answer");
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || "Failed to submit answer");
       }
-      const result = await response.json();
 
-      const timeSpent = startTime
-        ? Math.round((Date.now() - startTime.getTime()) / 1000)
-        : 0;
+      const { correct, correctAnswer, feedback } = await res.json();
 
-      // ✅ Update local state
-      setIsCorrect(result.correct);
+      // ✅ Optimistic UI update
+      setIsCorrect(correct);
       setShowResult(true);
       setCurrentExercise((prev) =>
         prev
           ? {
               ...prev,
               user_answer: userAnswer,
-              is_correct: result.correct,
-              correct_answer: result.correctAnswer,
-              feedback: result.feedback,
+              is_correct: correct,
+              correct_answer: correctAnswer,
+              feedback,
             }
           : prev
       );
 
-      const newStats = {
-        total: sessionStats.total + 1,
-        correct: sessionStats.correct + (result.correct ? 1 : 0),
-        timeSpent: sessionStats.timeSpent + timeSpent,
-      };
-      setSessionStats(newStats);
-      if (result.correct) setScore((s) => s + 15);
-
-      // ✅ Save to grammar_exercises
-      await supabase.from("grammar_exercises").insert({
-        session_id: sessionId,
-        user_id: user?.id,
-        sentence: currentExercise.sentence,
-        exercise_type: currentExercise.exercise_type,
-        user_answer: userAnswer,
-        correct_answer: result.correctAnswer,
-        is_correct: result.correct,
-        grammar_rule: currentExercise.grammar_rule,
-        feedback: result.feedback,
-        time_taken: timeSpent,
-        options: currentExercise.options || [],
-        blank_position: currentExercise.blank_position,
-      });
-
-      // ✅ Update session progress
-      await supabase
-        .from("learning_sessions")
-        .update({
-          score: score + (result.correct ? 15 : 0),
-          exercises_completed: newStats.total,
-          duration: newStats.timeSpent,
-        })
-        .eq("id", sessionId);
-    } catch (error) {
+      // ✅ Fire off DB update + stats refresh in parallel
+      await Promise.all([
+        supabase
+          .from("grammar_exercises")
+          .update({
+            user_answer: userAnswer,
+            is_correct: correct,
+            time_taken: timeSpent,
+          })
+          .eq("id", currentExercise.id),
+        fetchGrammarStats(),
+      ]);
+    } catch (err) {
       toast({
         title: "Failed to handle answer",
-        description: error instanceof Error ? error.message : String(error),
+        description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
-      console.error("Error submitting answer:", error);
+      console.error("handleAnswer error:", err);
     } finally {
       setLoading(false);
     }
@@ -463,7 +388,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
             <BookOpen className="h-6 w-6 text-gray-300 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{sessionStats.total}</p>
+            <p className="text-2xl font-bold">{stats?.total_exercises}</p>
             <p className="text-sm text-gray-400">Exercises</p>
           </CardContent>
         </Card>
@@ -471,7 +396,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
             <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{sessionStats.correct}</p>
+            <p className="text-2xl font-bold">{stats?.total_correct}</p>
             <p className="text-sm text-gray-400">Correct</p>
           </CardContent>
         </Card>
@@ -479,18 +404,8 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
           <CardContent className="p-4 text-center">
             <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{score}</p>
+            <p className="text-2xl font-bold">{stats?.total_points}</p>
             <p className="text-sm text-gray-400">Points</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
-          <CardContent className="p-4 text-center">
-            <Clock className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
-              {Math.round(sessionStats.timeSpent / 60)}m
-            </p>
-            <p className="text-sm text-gray-400">Time</p>
           </CardContent>
         </Card>
       </div>

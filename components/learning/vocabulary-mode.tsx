@@ -63,12 +63,29 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
   const [showStarter, setShowStarter] = useState(true);
 
   // score & stats
-  const [score, setScore] = useState<number>(0);
-  const [sessionStats, setSessionStats] = useState({
-    total: 0,
-    correct: 0,
-    timeSpent: 0, // seconds
-  });
+  const [stats, setStats] = useState<{
+    total_exercises: number;
+    total_correct: number;
+    total_points: number;
+  } | null>(null);
+
+  async function fetchStats() {
+    if (!user?.id) return;
+    try {
+      const resp = await fetch("/api/vocabulary/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const result = await resp.json();
+      setStats(result.stats);
+    } catch (err) {
+      console.error("fetchStats error:", err);
+    }
+  }
+  useEffect(() => {
+    fetchStats();
+  }, [user?.id]);
 
   // create session on mount
   async function startNewSession() {
@@ -178,8 +195,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
   }
 
   async function handleAnswer() {
-    if (!currentExercise || !sessionId || !user?.id) return;
-    if (!selectedAnswer) return;
+    if (!currentExercise || !sessionId || !user?.id || !selectedAnswer) return;
 
     const correct = selectedAnswer === currentExercise.correct_answer;
     setIsCorrect(correct);
@@ -189,64 +205,22 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
       ? Math.round((Date.now() - startTime) / 1000)
       : 0;
 
-    const newStats = {
-      total: sessionStats.total + 1,
-      correct: sessionStats.correct + (correct ? 1 : 0),
-      timeSpent: sessionStats.timeSpent + timeSpent,
-    };
-    setSessionStats(newStats);
-
-    const gainedPoints = correct ? 10 : 0;
-    setScore((s) => s + gainedPoints);
-
     try {
-      const { error: updateExErr } = await supabase
-        .from("vocabulary_exercises")
-        .update({
-          user_id: user.id,
-          user_answer: selectedAnswer,
-          is_correct: correct,
-          time_taken: timeSpent,
-          options: currentExercise.options,
-          example_sentence: currentExercise.example_sentence || null,
-        })
-        .eq("id", currentExercise.id);
-
-      if (updateExErr) throw updateExErr;
-
-      const { data: existingSession, error: fetchSessionErr } = await supabase
-        .from("learning_sessions")
-        .select("score, exercises_completed, duration")
-        .eq("id", sessionId)
-        .single();
-
-      if (fetchSessionErr) {
-        await supabase
-          .from("learning_sessions")
+      // ✅ Update DB + Refresh stats in parallel
+      await Promise.all([
+        supabase
+          .from("vocabulary_exercises")
           .update({
-            score: gainedPoints,
-            exercises_completed: newStats.total,
-            duration: newStats.timeSpent,
+            user_id: user.id,
+            user_answer: selectedAnswer,
+            is_correct: correct,
+            time_taken: timeSpent,
+            options: currentExercise.options,
+            example_sentence: currentExercise.example_sentence || null,
           })
-          .eq("id", sessionId);
-      } else {
-        const updatedScore = (existingSession.score || 0) + gainedPoints;
-        const updatedExercises = (existingSession.exercises_completed || 0) + 1;
-        const updatedDuration = (existingSession.duration || 0) + timeSpent;
-
-        const { error: updateSessionErr } = await supabase
-          .from("learning_sessions")
-          .update({
-            score: updatedScore,
-            exercises_completed: updatedExercises,
-            duration: updatedDuration,
-          })
-          .eq("id", sessionId);
-
-        if (updateSessionErr) throw updateSessionErr;
-      }
-
-      // analytics update stays as you had it …
+          .eq("id", currentExercise.id),
+        fetchStats(),
+      ]);
     } catch (err) {
       toast({
         title: "Failed to save answer",
@@ -323,7 +297,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
             <BookOpen className="h-6 w-6 mx-auto mb-2 text-[#bb86fc]" />
-            <p className="text-2xl font-bold">{sessionStats.total}</p>
+            <p className="text-2xl font-bold">{stats?.total_exercises}</p>
             <p className="text-sm text-gray-400">Exercises</p>
           </CardContent>
         </Card>
@@ -332,7 +306,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
             <CheckCircle className="h-6 w-6 mx-auto mb-2 text-[#03dac6]" />
-            <p className="text-2xl font-bold">{sessionStats.correct}</p>
+            <p className="text-2xl font-bold">{stats?.total_correct}</p>
             <p className="text-sm text-gray-400">Correct</p>
           </CardContent>
         </Card>
@@ -341,19 +315,8 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         <Card className="bg-[#212121] text-white shadow-md border-none">
           <CardContent className="p-4 text-center">
             <Star className="h-6 w-6 mx-auto mb-2 text-[#ffb300]" />
-            <p className="text-2xl font-bold">{score}</p>
+            <p className="text-2xl font-bold">{stats?.total_points}</p>
             <p className="text-sm text-gray-400">Points</p>
-          </CardContent>
-        </Card>
-
-        {/* Time */}
-        <Card className="bg-[#212121] text-white shadow-md border-none">
-          <CardContent className="p-4 text-center">
-            <Clock className="h-6 w-6 mx-auto mb-2 text-[#ff5252]" />
-            <p className="text-2xl font-bold">
-              {Math.round(sessionStats.timeSpent / 60)}m
-            </p>
-            <p className="text-sm text-gray-400">Time</p>
           </CardContent>
         </Card>
       </div>
