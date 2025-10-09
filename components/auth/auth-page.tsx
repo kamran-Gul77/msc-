@@ -24,45 +24,106 @@ export function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [signupMessage, setSignupMessage] = useState("");
   const { signIn, signUp } = useAuth();
-const handleSignIn = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    await signIn(email, password);
-  } catch (error) {
-    toast({
-      title: "Failed to Login",
-      description: error instanceof Error ? error.message : String(error),
-      variant: "destructive",
-    });
-    console.error("Sign in error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const result = await signIn(email, password);
 
-const handleSignUp = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    await signUp(email, password);
-    setSignupMessage(
-      "We've sent a confirmation email. Please confirm your email before logging in."
-    );
-    setEmail("");
-    setPassword("");
-  } catch (error) {
-    toast({
-      title: "Failed to Sign Up",
-      description: error instanceof Error ? error.message : String(error),
-      variant: "destructive",
-    });
-    console.error("Sign up error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+      // Handle Supabase-style result { error }
+      if (result?.error) {
+        console.error("Sign in error object:", result.error);
 
+        const errorMessage =
+          result.error.message ||
+          result.error.description ||
+          result.error.code ||
+          "Invalid credentials or login failed.";
+
+        toast({
+          title: "Login Failed ❌",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ✅ Success case
+      toast({
+        title: "Login Successful ✅",
+        description: "Welcome back! Redirecting to your dashboard...",
+        variant: "default",
+      });
+
+      console.log("Login successful ✅", result);
+    } catch (error: any) {
+      console.error("Sign in error (thrown):", error);
+
+      const errorMessage =
+        error?.message ||
+        error?.error_description ||
+        error?.code ||
+        "Something went wrong. Please try again.";
+
+      toast({
+        title: "Login Failed ❌",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const result = await signUp(email, password);
+
+      // Handle possible returned error
+      if (result?.error) {
+        console.error("Sign up error object:", result.error);
+
+        const errorMessage =
+          result.error.message ||
+          result.error.description ||
+          result.error.code ||
+          "Failed to create account.";
+
+        toast({
+          title: "Sign Up Failed ❌",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ✅ Success case
+      toast({
+        title: "Account Created Successfully 🎉",
+        description:
+          "We've sent you a confirmation email. Please verify your account before logging in.",
+        variant: "default",
+      });
+
+      setSignupMessage(
+        "We've sent a confirmation email. Please confirm your email before logging in."
+      );
+      setEmail("");
+      setPassword("");
+    } catch (error: any) {
+      console.error("Sign up error (thrown):", error);
+
+      toast({
+        title: "Sign Up Failed ❌",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#181818] flex items-center justify-center p-4">
