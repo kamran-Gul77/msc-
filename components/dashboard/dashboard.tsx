@@ -43,22 +43,37 @@ export interface UserProfile {
   current_level: number;
 }
 
-interface UserStats {
-  totalSessions: number;
-  vocabularyAccuracy: number;
-  grammarAccuracy: number;
-  conversationQuality: number;
-  currentStreak: number;
-  totalTimeSpent: number;
-  totalPoints: number;
-  currentLevel: number;
+export interface LearningSession {
+  id: string; // UUID
+  user_id: string; // foreign key referencing user_profiles(id)
+  mode: "vocabulary" | "grammar" | "conversation";
+  score: number;
+  duration: number; // in seconds or minutes, depending on app logic
+  exercises_completed: number;
+  difficulty_level: "beginner" | "intermediate" | "advanced";
+  created_at: string; // ISO timestamp
+  scenario?: string | null;
+  is_completed: boolean;
+}
+export interface LearningAnalytics {
+  id: string;
+  user_id: string;
+  date: string; // ISO date string (e.g., "2025-10-11")
+  total_time_spent: number;
+  vocabulary_accuracy: number;
+  grammar_accuracy: number;
+  conversation_quality: number;
+  exercises_completed: number;
+  current_streak: number;
+  created_at: string; // ISO timestamp (e.g., "2025-10-11T08:30:00Z")
 }
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
+  const [sessions, setSessions] = useState<LearningSession[] | null>(null);
+  const [stats, setStats] = useState<LearningAnalytics[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
 
@@ -67,7 +82,6 @@ export function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchUserProfile();
-      fetchStats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -96,14 +110,50 @@ export function Dashboard() {
       setLoading(false);
     }
   };
+  const fetchSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("learning_sessions")
+        .select("*")
+        .eq("user_id", user?.id);
 
-  const fetchStats = async () => {
-    const { data, error } = await supabase.rpc("get_dashboard_stats", {
-      uid: user?.id,
-    });
-    if (error) throw error;
-    setStats(data[0]); // since RPC returns an array
+      if (error) {
+        console.error("Error fetching sessions:", error);
+        return;
+      }
+
+      console.log("data", data);
+      setSessions(data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+  const fetchLearningAnalytics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("learning_analytics")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching learning analytics:", error);
+        return;
+      }
+
+      console.log("Learning analytics:", data);
+      setStats(data); // reuse 'stats' state to store analytics list
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id) fetchSessions();
+    if (user?.id) fetchLearningAnalytics();
+  }, [user]);
 
   const handleProfileComplete = (newProfile: UserProfile) => {
     setProfile(newProfile);
@@ -139,14 +189,14 @@ export function Dashboard() {
               <div className="hidden sm:flex items-center space-x-2 bg-[#303030] px-3 py-1 rounded-full">
                 <Trophy className="h-4 w-4 text-yellow-500" />
                 <span className="text-sm font-medium">
-                  {stats?.totalPoints || 0} points
+                  {/* {stats?.totalPoints || 0} points */}
                 </span>
               </div>
 
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-sm text-[#fff]">
-                  Level {stats?.currentLevel || 1}
+                  {/* Level {stats?[0]. || 1} */}
                 </span>
               </div>
 
@@ -217,7 +267,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Total Sessions</p>
                       <p className="text-3xl font-bold">
-                        {stats?.totalSessions || 0}
+                        {sessions?.length || 0}
                       </p>
                     </div>
                     <Calendar className="h-8 w-8 text-gray-400" />
@@ -231,7 +281,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Current Streak</p>
                       <p className="text-3xl font-bold">
-                        {stats?.currentStreak || 0}
+                        {stats?.[0].current_streak || 0}
                       </p>
                     </div>
                     <Zap className="h-8 w-8 text-gray-400" />
@@ -245,7 +295,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Total Points</p>
                       <p className="text-3xl font-bold">
-                        {stats?.totalPoints || 0}
+                        {stats?.[0].exercises_completed || 0}
                       </p>
                     </div>
                     <Trophy className="h-8 w-8 text-gray-400" />
@@ -259,7 +309,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Current Level</p>
                       <p className="text-3xl font-bold">
-                        {stats?.currentLevel}
+                        {/* {stats?.currentLevel} */}
                       </p>
                     </div>
                     <Award className="h-8 w-8 text-gray-400" />
@@ -281,11 +331,11 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.vocabularyAccuracy || 0}%</span>
+                      <span>{stats?.[0].vocabulary_accuracy || 0}%</span>
                     </div>
                     <Progress
                       color="#333"
-                      value={stats?.vocabularyAccuracy || 0}
+                      value={stats?.[0].vocabulary_accuracy || 0}
                       className="h-2"
                     />
                   </div>
@@ -303,10 +353,10 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.grammarAccuracy || 0}%</span>
+                      <span>{stats?.[0].grammar_accuracy || 0}%</span>
                     </div>
                     <Progress
-                      value={stats?.grammarAccuracy || 0}
+                      value={stats?.[0].grammar_accuracy || 0}
                       className="h-2"
                     />
                   </div>
@@ -324,10 +374,10 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Quality Score</span>
-                      <span>{stats?.conversationQuality || 0}%</span>
+                      <span>{stats?.[0].conversation_quality || 0}%</span>
                     </div>
                     <Progress
-                      value={stats?.conversationQuality || 0}
+                      value={stats?.[0].conversation_quality || 0}
                       className="h-2"
                     />
                   </div>

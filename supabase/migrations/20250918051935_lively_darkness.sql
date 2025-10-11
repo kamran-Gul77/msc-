@@ -1,5 +1,5 @@
 /*
-  # Create Learning Platform Schema
+# Create Learning Platform Schema
 
   1. New Tables
     - `user_profiles` - Store user information and preferences
@@ -81,12 +81,12 @@
   2. Security
     - Enable RLS on all tables
     - Add policies for authenticated users to manage their own data
-    - Create indexes for better performance
+- Create indexes for better performance
     - Add triggers for automatic timestamp updates
 
   3. Functions
-    - Create function to update user profile timestamp
-    - Create trigger to automatically update updated_at field
+- Create function to update user profile timestamp
+- Create trigger to automatically update updated_at field
 */
 
 -- Create user_profiles table
