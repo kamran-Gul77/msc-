@@ -143,9 +143,9 @@ export default function FeedbackCarousel() {
       </div>
 
       {/* Dot Indicators */}
-      {feedbacks.length > 1 && (
+      {feedbacks?.length > 1 && (
         <div className="flex justify-center items-center gap-2 mt-8">
-          {feedbacks.map((_, index) => (
+          {feedbacks?.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
