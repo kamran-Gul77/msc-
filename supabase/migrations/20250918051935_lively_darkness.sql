@@ -36,6 +36,7 @@ CREATE TABLE public.conversations (
   correction_explanation text,
   context_summary text,
   mode text DEFAULT 'conversation'::text CHECK (mode = ANY (ARRAY['conversation'::text, 'grammar'::text, 'vocabulary'::text])),
+  is_completed boolean DEFAULT false,
   CONSTRAINT conversations_pkey PRIMARY KEY (id),
   CONSTRAINT conversations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
 );

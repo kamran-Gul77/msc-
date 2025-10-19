@@ -64,7 +64,6 @@ export interface LearningAnalytics {
   grammar_accuracy: number;
   conversation_quality: number;
   exercises_completed: number;
-  current_streak: number;
   created_at: string; // ISO timestamp (e.g., "2025-10-11T08:30:00Z")
 }
 
@@ -72,11 +71,27 @@ export function Dashboard() {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [sessions, setSessions] = useState<LearningSession[] | null>(null);
+  const [sessions, setSessions] = useState<LearningSession[]>([]);
   const [stats, setStats] = useState<LearningAnalytics[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [vocabStats, setVocabStats] = useState<{
+    total_exercises: number;
+    total_correct: number;
+    total_points: number;
+  } | null>(null);
 
+  const [grammarStats, setGrammarStats] = useState<{
+    total_exercises: number;
+    total_correct: number;
+    total_points: number;
+  } | null>(null);
+
+  const [readingStats, setReadingStats] = useState<{
+    total_exercises: number;
+    total_correct: number;
+    total_points: number;
+  } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -115,7 +130,8 @@ export function Dashboard() {
       const { data, error } = await supabase
         .from("learning_sessions")
         .select("*")
-        .eq("user_id", user?.id);
+        .eq("user_id", user?.id)
+        .eq("is_completed", true);
 
       if (error) {
         console.error("Error fetching sessions:", error);
@@ -150,10 +166,129 @@ export function Dashboard() {
     }
   };
 
+  // Fetch Vocabulary Stats
+  async function fetchVocabStats() {
+    if (!user?.id) return;
+    try {
+      const resp = await fetch("/api/vocabulary/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const result = await resp.json();
+      setVocabStats(result.stats);
+    } catch (err) {
+      console.error("fetchVocabStats error:", err);
+    }
+  }
+
+  // Fetch Grammar Stats
+  async function fetchGrammarStats() {
+    if (!user?.id) return;
+    try {
+      const resp = await fetch("/api/grammar/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const result = await resp.json();
+      setGrammarStats(result.stats);
+    } catch (err) {
+      console.error("fetchGrammarStats error:", err);
+    }
+  }
+
+  // Fetch Reading Stats (example for 3rd mode)
+  async function fetchReadingStats() {
+    if (!user?.id) return;
+    try {
+      const resp = await fetch("/api/reading/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const result = await resp.json();
+      setReadingStats(result.stats);
+    } catch (err) {
+      console.error("fetchReadingStats error:", err);
+    }
+  }
+  const updateUserProgress = async (points: number, level: number) => {
+    try {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({
+          total_points: points,
+          current_level: level,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user?.id);
+
+      if (error) {
+        console.error("Error updating user progress:", error);
+      } else {
+        console.log("✅ User profile updated:", { points, level });
+        setProfile((prev) =>
+          prev ? { ...prev, total_points: points, current_level: level } : prev
+        );
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  // Run all on load
   useEffect(() => {
-    if (user?.id) fetchSessions();
-    if (user?.id) fetchLearningAnalytics();
-  }, [user]);
+    if (user?.id) {
+      fetchVocabStats();
+      fetchGrammarStats();
+      fetchReadingStats();
+    }
+  }, [user?.id]);
+  useEffect(() => {
+    if (user?.id) {
+      fetchSessions();
+      fetchLearningAnalytics();
+    }
+  }, [user?.id, activeTab]);
+
+  const completedConversations = sessions.filter(
+    (s) => s.mode === "conversation" && s.is_completed === true
+  ).length;
+  console.log(completedConversations, "completedConversations");
+
+  // Each completed conversation = 100 points
+  const conversationPoints = completedConversations * 100;
+
+  // ✅ Total Points from all modes
+  const totalPoints =
+    (vocabStats?.total_points || 0) +
+    (grammarStats?.total_points || 0) +
+    (readingStats?.total_points || 0) +
+    conversationPoints;
+
+  // ✅ Streak (1 per 100 points)
+  const streak = Math.floor(totalPoints / 100);
+
+  useEffect(() => {
+    if (!user?.id || !profile) return;
+
+    // Determine current level based on total points
+    let newLevel = 1;
+    if (totalPoints >= 1000) newLevel = 5;
+    else if (totalPoints >= 700) newLevel = 4;
+    else if (totalPoints >= 400) newLevel = 3;
+    else if (totalPoints >= 200) newLevel = 2;
+    else newLevel = 1;
+
+    // Only update if there's a change
+    if (
+      profile.total_points !== totalPoints ||
+      profile.current_level !== newLevel
+    ) {
+      updateUserProgress(totalPoints, newLevel);
+    }
+  }, [totalPoints, profile]);
 
   const handleProfileComplete = (newProfile: UserProfile) => {
     setProfile(newProfile);
@@ -196,7 +331,7 @@ export function Dashboard() {
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-sm text-[#fff]">
-                  {/* Level {stats?[0]. || 1} */}
+                  Level {profile?.current_level || 0}
                 </span>
               </div>
 
@@ -280,9 +415,7 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-400">Current Streak</p>
-                      <p className="text-3xl font-bold">
-                        {stats?.[0].current_streak || 0}
-                      </p>
+                      <p className="text-3xl font-bold">{streak || 0}</p>
                     </div>
                     <Zap className="h-8 w-8 text-gray-400" />
                   </div>
@@ -294,9 +427,7 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-400">Total Points</p>
-                      <p className="text-3xl font-bold">
-                        {stats?.[0].exercises_completed || 0}
-                      </p>
+                      <p className="text-3xl font-bold">{totalPoints || 0}</p>
                     </div>
                     <Trophy className="h-8 w-8 text-gray-400" />
                   </div>
@@ -309,7 +440,7 @@ export function Dashboard() {
                     <div>
                       <p className="text-sm text-gray-400">Current Level</p>
                       <p className="text-3xl font-bold">
-                        {/* {stats?.currentLevel} */}
+                        {profile?.current_level || 0}
                       </p>
                     </div>
                     <Award className="h-8 w-8 text-gray-400" />
@@ -331,11 +462,11 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.[0].vocabulary_accuracy || 0}%</span>
+                      <span>{stats?.[0]?.vocabulary_accuracy || 0}%</span>
                     </div>
                     <Progress
                       color="#333"
-                      value={stats?.[0].vocabulary_accuracy || 0}
+                      value={stats?.[0]?.vocabulary_accuracy || 0}
                       className="h-2"
                     />
                   </div>
@@ -353,10 +484,10 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.[0].grammar_accuracy || 0}%</span>
+                      <span>{stats?.[0]?.grammar_accuracy || 0}%</span>
                     </div>
                     <Progress
-                      value={stats?.[0].grammar_accuracy || 0}
+                      value={stats?.[0]?.grammar_accuracy || 0}
                       className="h-2"
                     />
                   </div>
@@ -374,10 +505,10 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Quality Score</span>
-                      <span>{stats?.[0].conversation_quality || 0}%</span>
+                      <span>{stats?.[0]?.conversation_quality || 0}%</span>
                     </div>
                     <Progress
-                      value={stats?.[0].conversation_quality || 0}
+                      value={stats?.[0]?.conversation_quality || 0}
                       className="h-2"
                     />
                   </div>

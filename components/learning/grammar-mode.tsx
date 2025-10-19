@@ -111,6 +111,49 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       console.error("Error starting session:", error);
     }
   };
+  // ✅ Update or insert grammar accuracy for this user
+  const updateGrammarAccuracy = async (userId: string) => {
+    try {
+      // 1️⃣ Fetch all grammar exercises of this user
+      const { data: exercises, error: fetchError } = await supabase
+        .from("grammar_exercises")
+        .select("is_correct")
+        .eq("user_id", userId);
+
+      if (fetchError) throw fetchError;
+
+      if (!exercises || exercises.length === 0) return;
+
+      // 2️⃣ Calculate accuracy
+      const total = exercises.length;
+      const correct = exercises.filter((e) => e.is_correct).length;
+      const accuracy = (correct / total) * 100;
+
+      // 3️⃣ Upsert (insert if not exists) into learning_analytics
+      const { error: upsertError } = await supabase
+        .from("learning_analytics")
+        .upsert(
+          {
+            user_id: userId,
+            date: new Date().toISOString().split("T")[0],
+            grammar_accuracy: accuracy,
+          },
+          { onConflict: "user_id,date" } // ensures only one record per day
+        );
+
+      if (upsertError) throw upsertError;
+
+      console.log("✅ Grammar accuracy updated:", accuracy.toFixed(2) + "%");
+
+      // 4️⃣ Optionally show in UI
+      setStats((prev) => ({
+        ...(prev || { total_exercises: 0, total_correct: 0, total_points: 0 }),
+        live_accuracy: accuracy.toFixed(2),
+      }));
+    } catch (err) {
+      console.error("updateGrammarAccuracy error:", err);
+    }
+  };
 
   const generateNewExercise = async (id?: string) => {
     setLoading(true);
@@ -218,6 +261,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
           .eq("id", currentExercise.id),
         fetchGrammarStats(),
       ]);
+      updateGrammarAccuracy(user?.id);
     } catch (err) {
       toast({
         title: "Failed to handle answer",

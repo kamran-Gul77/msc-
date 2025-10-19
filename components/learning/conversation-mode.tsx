@@ -37,10 +37,10 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
+import { updateConversationQuality } from "@/lib/supabase/apiCalls";
 
 // --- Constants ---
-const MESSAGE_LIMIT = 150;
-const ACHIEVEMENT_SCORE_THRESHOLD = 5; // Example threshold for "Great Conversationalist"
+const MESSAGE_LIMIT = 5;
 
 // --- Interface Definitions ---
 
@@ -272,7 +272,24 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null); // Changed to Textarea ref for better input
 
   const supabase = createClient();
+  const fetchSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("learning_sessions")
+        .select("*")
+        .eq("user_id", user?.id);
 
+      if (error) {
+        console.error("Error fetching sessions:", error);
+        return;
+      }
+
+      console.log("data", data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+    }
+  };
   // Load custom scenarios on mount
   useEffect(() => {
     fetchCustomScenarios();
@@ -355,7 +372,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     const { data, error } = await supabase
       .from("conversation_scenarios")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -432,17 +448,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     }
   };
 
-  const saveAchievement = async (title: string, description: string) => {
-    if (!user) return;
-    await supabase.from("achievements").insert({
-      user_id: user.id,
-      achievement_type: "conversation_milestone",
-      title: title,
-      description: description,
-      badge_icon: "🏅",
-    });
-  };
-
   const completeSession = async (finalAverageScore: number) => {
     if (!sessionId || isSessionComplete) return;
 
@@ -469,14 +474,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     setStoredDurationSeconds(finalDuration);
 
     // 2. Award achievement if score is high enough
-    if (finalAverageScore >= ACHIEVEMENT_SCORE_THRESHOLD) {
-      await saveAchievement(
-        "Great Conversationalist",
-        `Completed a scenario with an average score of ${finalAverageScore.toFixed(
-          1
-        )} or higher!`
-      );
-    }
 
     setMessages((prev) => [
       ...prev,
@@ -494,6 +491,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           "Stats and Achievement saved. Click 'Back to Scenarios' to choose a new one.",
       },
     ]);
+    fetchSessions();
   };
 
   const startConversation = async (scenario: ConversationScenario) => {
@@ -621,8 +619,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
     setIsLoading(true); // START LOADING
 
     try {
-      const nextMessageCount = sessionStats.messageCount + 1;
-
       // 1. Send to AI endpoint
       const response = await fetch("/api/conversation/chat", {
         method: "POST",
@@ -717,6 +713,15 @@ export function ConversationMode({ profile }: ConversationModeProps) {
           score: Math.round(currentAvgScore * 10), // Save the new average score (multiplied by 10 for integer storage if needed)
         })
         .eq("id", sessionId);
+      // ✅ Update conversation quality accuracy in learning_analytics table
+      if (user?.id) {
+        const conversationQualityPercent = (currentAvgScore / 5) * 100; // normalize 0–100
+        await updateConversationQuality(
+          user.id,
+          conversationQualityPercent,
+          currentTotalDuration
+        );
+      }
 
       // Update local state to reflect the new stored duration
       setStoredDurationSeconds(currentTotalDuration);

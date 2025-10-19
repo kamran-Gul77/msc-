@@ -193,7 +193,48 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
       setLoading(false);
     }
   }
+  const updateGrammarAccuracy = async (userId: string) => {
+    try {
+      // 1️⃣ Fetch all vocabulary exercises of this user
+      const { data: exercises, error: fetchError } = await supabase
+        .from("vocabulary_exercises")
+        .select("is_correct")
+        .eq("user_id", userId);
 
+      if (fetchError) throw fetchError;
+
+      if (!exercises || exercises.length === 0) return;
+
+      // 2️⃣ Calculate accuracy
+      const total = exercises.length;
+      const correct = exercises.filter((e) => e.is_correct).length;
+      const accuracy = (correct / total) * 100;
+
+      // 3️⃣ Upsert (insert if not exists) into learning_analytics
+      const { error: upsertError } = await supabase
+        .from("learning_analytics")
+        .upsert(
+          {
+            user_id: userId,
+            date: new Date().toISOString().split("T")[0],
+            vocabulary_accuracy: accuracy,
+          },
+          { onConflict: "user_id,date" } // ensures only one record per day
+        );
+
+      if (upsertError) throw upsertError;
+
+      console.log("✅ vocabulary accuracy updated:", accuracy.toFixed(2) + "%");
+
+      // 4️⃣ Optionally show in UI
+      setStats((prev) => ({
+        ...(prev || { total_exercises: 0, total_correct: 0, total_points: 0 }),
+        live_accuracy: accuracy.toFixed(2),
+      }));
+    } catch (err) {
+      console.error("updateGrammarAccuracy error:", err);
+    }
+  };
   async function handleAnswer() {
     if (!currentExercise || !sessionId || !user?.id || !selectedAnswer) return;
 
@@ -221,6 +262,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
           .eq("id", currentExercise.id),
         fetchStats(),
       ]);
+      updateGrammarAccuracy(user?.id);
     } catch (err) {
       toast({
         title: "Failed to save answer",
