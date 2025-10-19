@@ -161,10 +161,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // Save for this user/session
+    // Remove pool 'id' before inserting
+    const { id: _, ...exerciseData } = exercise;
+
     const { data: savedExercise, error: saveErr } = await supabase
       .from("grammar_exercises")
-      .insert([{ session_id, user_id, ...exercise }])
+      .insert([{ session_id, user_id, ...exerciseData }])
       .select()
       .single();
 

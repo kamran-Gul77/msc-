@@ -130,8 +130,7 @@ export function Dashboard() {
       const { data, error } = await supabase
         .from("learning_sessions")
         .select("*")
-        .eq("user_id", user?.id)
-        .eq("is_completed", true);
+        .eq("user_id", user?.id);
 
       if (error) {
         console.error("Error fetching sessions:", error);
@@ -198,21 +197,6 @@ export function Dashboard() {
     }
   }
 
-  // Fetch Reading Stats (example for 3rd mode)
-  async function fetchReadingStats() {
-    if (!user?.id) return;
-    try {
-      const resp = await fetch("/api/reading/stats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-      const result = await resp.json();
-      setReadingStats(result.stats);
-    } catch (err) {
-      console.error("fetchReadingStats error:", err);
-    }
-  }
   const updateUserProgress = async (points: number, level: number) => {
     try {
       const { error } = await supabase
@@ -237,18 +221,12 @@ export function Dashboard() {
     }
   };
 
-  // Run all on load
-  useEffect(() => {
-    if (user?.id) {
-      fetchVocabStats();
-      fetchGrammarStats();
-      fetchReadingStats();
-    }
-  }, [user?.id]);
   useEffect(() => {
     if (user?.id) {
       fetchSessions();
       fetchLearningAnalytics();
+      fetchVocabStats();
+      fetchGrammarStats();
     }
   }, [user?.id, activeTab]);
 
@@ -321,18 +299,12 @@ export function Dashboard() {
             </Link>
 
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 bg-[#303030] px-3 py-1 rounded-full">
-                <Trophy className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm font-medium">
-                  {/* {stats?.totalPoints || 0} points */}
-                </span>
-              </div>
-
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-sm text-[#fff]">
                   Level {profile?.current_level || 0}
                 </span>
+                <Trophy className="h-4 w-4 text-yellow-500" />
               </div>
 
               <Button
@@ -355,7 +327,7 @@ export function Dashboard() {
           onValueChange={setActiveTab}
           className="space-y-8"
         >
-          <TabsList className="grid w-full lg:w-auto lg:inline-grid grid-cols-2 lg:grid-cols-5 bg-[#212121]">
+          <TabsList className="grid w-full lg:w-auto lg:inline-grid grid-cols-2 lg:grid-cols-5 bg-[#212121] h-auto">
             <TabsTrigger
               value="overview"
               className="flex items-center space-x-2 text-[#fff] data-[state=active]:bg-[#303030]"
