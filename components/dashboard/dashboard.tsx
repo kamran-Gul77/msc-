@@ -33,6 +33,7 @@ import { ConversationMode } from "@/components/learning/conversation-mode";
 import { ProfileSetup } from "@/components/profile/profile-setup";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import Loading from "../Loading";
 
 export interface UserProfile {
   id: string;
@@ -274,11 +275,7 @@ export function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="animate-pulse text-lg">Loading your dashboard...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (showProfileSetup) {

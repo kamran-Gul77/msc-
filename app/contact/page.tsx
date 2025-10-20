@@ -61,7 +61,7 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
             {/* Contact Information */}
             <div className="space-y-6">
               <Card className="bg-[#212121] border border-[#303030] text-white">
@@ -154,7 +154,7 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Form */}
-            <div className="lg:col-span-2">
+            {/* <div className="lg:col-span-2">
               <Card className="bg-[#212121] border border-[#303030] text-white">
                 <CardHeader>
                   <CardTitle className="text-white">
@@ -292,7 +292,7 @@ export default function ContactPage() {
                   </form>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

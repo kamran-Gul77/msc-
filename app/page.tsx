@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,11 +20,21 @@ import {
 } from "lucide-react";
 import { Navigation } from "@/components/Elements/Navigation";
 import { Footer } from "@/components/Elements/Footer";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import FeedbackCarousel from "@/components/Feedback/FeedbackCarousel";
+import { useEffect, useState } from "react";
+import Loading from "@/components/Loading";
 
 export default function HomePage() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate page load
+    const timer = setTimeout(() => setLoading(false), 2000); // 1 second minimum
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <Loading />;
   return (
     <div className="min-h-screen bg-[#121212]">
       <Navigation />
