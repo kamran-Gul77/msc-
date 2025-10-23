@@ -102,14 +102,13 @@ export function AuthPage() {
       // ✅ Success case
       toast({
         title: "Account Created Successfully 🎉",
-        description:
-          "We've sent you a confirmation email. Please verify your account before logging in.",
+        description: "Learn English with LinguaAi.",
         variant: "default",
       });
 
-      setSignupMessage(
-        "We've sent a confirmation email. Please confirm your email before logging in."
-      );
+      // setSignupMessage(
+      // //   "We've sent a confirmation email. Please confirm your email before logging in."
+      // // );
       setEmail("");
       setPassword("");
     } catch (error: any) {
