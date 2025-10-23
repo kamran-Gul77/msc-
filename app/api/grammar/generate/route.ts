@@ -46,8 +46,9 @@ export async function POST(req: Request) {
         );
       }
 
-      const isCorrect = exercise.correct_answer === userAnswer;
-
+      const isCorrect =
+        exercise.correct_answer.trim().toLowerCase() ===
+        userAnswer.trim().toLowerCase();
       await supabase
         .from("grammar_exercises")
         .update({

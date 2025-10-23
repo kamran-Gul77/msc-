@@ -97,8 +97,9 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
 
-      const isCorrect = exercise.correct_answer === userAnswer;
-
+      const isCorrect =
+        exercise.correct_answer.trim().toLowerCase() ===
+        userAnswer.trim().toLowerCase();
       await supabase
         .from("vocabulary_exercises")
         .update({
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest) {
         .from("vocabulary_pool")
         .insert([
           {
-            word: aiExercise.word,
+            word: aiExercise.word.trim().toLowerCase(),
             exercise_type: aiExercise.exercise_type,
             correct_answer: aiExercise.correct_answer,
             options: aiExercise.options,
