@@ -79,43 +79,53 @@ export default function FeedbackCarousel() {
             className="flex transition-transform duration-300 ease-in-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            {feedbacks?.map((fb, i) => (
-              <div key={i} className="w-full flex-shrink-0 px-2">
-                <div className="bg-[#212121] border border-[#303030] rounded-xl p-8 shadow-xl">
-                  <div className="flex items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[...Array(5)].map((_, starIndex) => (
-                          <span
-                            key={starIndex}
-                            className={`text-xl ${
-                              starIndex < fb.rating
-                                ? "text-yellow-400"
-                                : "text-gray-600"
-                            }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-lg text-white leading-relaxed mb-4">
-                        &quot;{fb.experience}&quot;
-                      </p>
-                      {fb.suggestion && (
-                        <p className="text-sm text-gray-400 italic">
-                          {fb.suggestion}
+            {feedbacks.length > 0 ? (
+              feedbacks.map((fb, i) => (
+                <div key={i} className="w-full flex-shrink-0 px-2">
+                  <div className="bg-[#212121] border border-[#303030] rounded-xl p-8 shadow-xl">
+                    <div className="flex items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1 mb-3">
+                          {[...Array(5)].map((_, starIndex) => (
+                            <span
+                              key={starIndex}
+                              className={`text-xl ${
+                                starIndex < fb.rating
+                                  ? "text-yellow-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-lg text-white leading-relaxed mb-4">
+                          &quot;{fb.experience}&quot;
                         </p>
-                      )}
+                        {fb.suggestion && (
+                          <p className="text-sm text-gray-400 italic">
+                            {fb.suggestion}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-6 pt-6 border-t border-[#303030]">
+                      <p className="text-white font-semibold">
+                        {fb.name || "Anonymous"}
+                      </p>
                     </div>
                   </div>
-                  <div className="mt-6 pt-6 border-t border-[#303030]">
-                    <p className="text-white font-semibold">
-                      {fb.name || "Anonymous"}
-                    </p>
-                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="w-full flex-shrink-0 px-2">
+                <div className="bg-[#212121] border border-[#303030] rounded-xl p-8 shadow-xl">
+                  <p className="text-gray-400 text-center">
+                    No feedback available.
+                  </p>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

@@ -156,3 +156,141 @@ CREATE TABLE public.vocabulary_pool (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT vocabulary_pool_pkey PRIMARY KEY (id)
 );
+-- -calcaute voab stast
+-- begin
+--   return query
+--   select
+--     count(*)::int as total_exercises,
+--     count(*) filter (where is_correct = true)::int as total_correct,
+--     coalesce(sum(case when is_correct then 5 else 0 end),0)::int as total_points
+--   from vocabulary_exercises
+--   where user_id = p_user_id;
+-- end;
+-- calcaute grammer stats
+-- begin
+--   return query
+--   select
+--     count(*)::int as total_exercises,
+--     count(*) filter (where is_correct = true)::int as total_correct,
+--     coalesce(sum(case when is_correct then 5 else 0 end),0)::int as total_points
+--   from grammar_exercises
+--   where user_id = p_user_id;
+-- end;
+
+-- get dasboard stas
+
+-- DECLARE
+--   vocab RECORD;
+--   gram RECORD;
+--   convo RECORD;
+--   total_points INT;
+--   total_correct INT;
+--   total_exercises INT;
+--   accuracy NUMERIC;
+--   level INT;
+--   streak INT;
+-- BEGIN
+--   -- Vocabulary stats
+--   SELECT 
+--     COUNT(*)::int AS total_exercises,
+--     COUNT(*) FILTER (WHERE is_correct)::int AS total_correct,
+--     COALESCE(SUM(CASE WHEN is_correct THEN 5 ELSE 0 END),0)::int AS total_points
+--   INTO vocab
+--   FROM vocabulary_exercises
+--   WHERE user_id = uid;
+
+--   -- Grammar stats
+--   SELECT 
+--     COUNT(*)::int AS total_exercises,
+--     COUNT(*) FILTER (WHERE is_correct)::int AS total_correct,
+--     COALESCE(SUM(CASE WHEN is_correct THEN 5 ELSE 0 END),0)::int AS total_points
+--   INTO gram
+--   FROM grammar_exercises
+--   WHERE user_id = uid;
+
+--   -- Conversation stats (optional; if not used, returns zeros)
+--   SELECT 
+--     COUNT(*)::int AS total_exercises,
+--     COUNT(*) FILTER (WHERE is_correct)::int AS total_correct,
+--     COALESCE(SUM(CASE WHEN is_correct THEN 5 ELSE 0 END),0)::int AS total_points
+--   INTO convo
+--   FROM conversation_exercises
+--   WHERE user_id = uid;
+
+--   -- Combined totals
+--   total_points := vocab.total_points + gram.total_points + convo.total_points;
+--   total_correct := vocab.total_correct + gram.total_correct + convo.total_correct;
+--   total_exercises := vocab.total_exercises + gram.total_exercises + convo.total_exercises;
+--   accuracy := CASE WHEN total_exercises > 0 THEN ROUND((total_correct::numeric / total_exercises) * 100, 2) ELSE 0 END;
+
+--   -- Level system (every 100 pts = 1 level)
+--   level := GREATEST(1, CEIL(total_points / 100.0));
+
+--   -- Simple streak (number of consecutive days with activity)
+--   SELECT COUNT(DISTINCT DATE(created_at)) 
+--   INTO streak
+--   FROM (
+--     SELECT created_at FROM vocabulary_exercises WHERE user_id = uid
+--     UNION ALL
+--     SELECT created_at FROM grammar_exercises WHERE user_id = uid
+--     UNION ALL
+--     SELECT created_at FROM conversation_exercises WHERE user_id = uid
+--   ) combined
+--   WHERE created_at >= CURRENT_DATE - INTERVAL '7 days';
+
+--   RETURN jsonb_build_object(
+--     'level', level,
+--     'streak', streak,
+--     'totalPoints', total_points,
+--     'accuracy', accuracy,
+--     'vocabularyAccuracy', CASE WHEN vocab.total_exercises > 0 THEN ROUND((vocab.total_correct::numeric / vocab.total_exercises)*100, 2) ELSE 0 END,
+--     'grammarAccuracy', CASE WHEN gram.total_exercises > 0 THEN ROUND((gram.total_correct::numeric / gram.total_exercises)*100, 2) ELSE 0 END,
+--     'conversationAccuracy', CASE WHEN convo.total_exercises > 0 THEN ROUND((convo.total_correct::numeric / convo.total_exercises)*100, 2) ELSE 0 END
+--   );
+-- END;
+
+
+
+-- update learning stas
+--
+-- BEGIN
+--   INSERT INTO learning_analytics (
+--     user_id,
+--     total_time_spent,
+--     conversation_quality,
+--     exercises_completed,
+--     current_streak
+--   )
+--   VALUES (
+--     uid,
+--     duration,
+--     avg_score,
+--     1,
+--     1
+--   )
+--   ON CONFLICT (user_id, date)
+--   DO UPDATE SET
+--     total_time_spent = learning_analytics.total_time_spent + EXCLUDED.total_time_spent,
+--     conversation_quality = ROUND((learning_analytics.conversation_quality + EXCLUDED.conversation_quality) / 2, 2),
+--     exercises_completed = learning_analytics.exercises_completed + 1,
+--     current_streak = CASE
+--       WHEN learning_analytics.date = CURRENT_DATE - INTERVAL '1 day' THEN learning_analytics.current_streak + 1
+--       ELSE 1
+--     END;
+-- END;
+-- update user profile
+
+-- BEGIN
+--   UPDATE user_profiles
+--   SET
+--     total_points = COALESCE(total_points, 0) + points,
+--     current_level = 1 + (COALESCE(total_points, 0) + points) / 100, -- Every 100 pts = new level
+--     updated_at = now()
+--   WHERE id = uid;
+-- END;
+
+-- updated user profile
+-- BEGIN
+--   NEW.updated_at = now();
+--   RETURN NEW;
+-- END;
