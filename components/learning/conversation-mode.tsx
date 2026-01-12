@@ -38,6 +38,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
 import { updateConversationQuality } from "@/lib/supabase/apiCalls";
+import { useToast } from "@/hooks/use-toast";
 
 // --- Constants ---
 const MESSAGE_LIMIT = 5;
@@ -246,6 +247,8 @@ const MAX_INPUT_CHARS = 300;
 
 export function ConversationMode({ profile }: ConversationModeProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedScenario, setSelectedScenario] =
@@ -607,59 +610,54 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       return;
 
     const currentInput = inputMessage;
+    const userMessageId = `user-${Date.now()}`;
+
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: userMessageId,
       content: currentInput,
       isUser: true,
       timestamp: new Date(),
     };
 
+    // 1️⃣ Optimistic UI update
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
-    setIsLoading(true); // START LOADING
+    setIsLoading(true);
 
     try {
-      // 1. Send to AI endpoint
       const response = await fetch("/api/conversation/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: currentInput,
+          session_id: sessionId, // 🔑 LangChain memory key
           scenario: selectedScenario.id,
           context: selectedScenario.context,
-          conversation_history: messages,
           proficiency_level: profile?.proficiency_level || "beginner",
-          session_id: sessionId,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to get AI response");
+      if (!response.ok) {
+        throw new Error(`AI request failed: ${response.status}`);
+      }
 
       const data = await response.json();
-      const ai = data.ai || {};
 
-      const aiResponse =
-        ai.ai_reply || "⚠️ No reply from AI partner. Try again.";
-      const correctedText = ai.corrected_text || null;
-      const correctionExplanation = ai.correction_explanation || null;
-      const contextSummary = ai.context_summary || null;
-      // Ensure feedbackScore is a number, defaulting to 0 if null/undefined
-      const feedbackScore =
-        typeof ai.feedback_score === "number" ? ai.feedback_score : 0;
+      const aiResponse = data.ai_reply ?? "⚠️ No reply from AI.";
+      const feedbackScore = Number(data.feedback_score ?? 0);
 
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         content: aiResponse,
-        corrected: correctedText,
-        correction_explanation: correctionExplanation,
+        corrected: data.corrected_text,
+        correction_explanation: data.correction_explanation,
         isUser: false,
         timestamp: new Date(),
       };
 
-      // 2. Update stats and local state
+      // 2️⃣ Update session stats
       const newMessageCount = sessionStats.messageCount + 1;
       const newTotalScore = sessionStats.totalUserScore + feedbackScore;
-
       const currentAvgScore = newTotalScore / newMessageCount;
 
       setSessionStats({
@@ -667,86 +665,62 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         totalUserScore: newTotalScore,
       });
 
+      // 3️⃣ Attach feedback to user message + add AI message
       setMessages((prev) => {
-        // Update the last message (the user's) with the received feedback score
-        const updatedMessages = [...prev];
-        const lastUserMessage = updatedMessages[updatedMessages.length - 1];
-        if (lastUserMessage.isUser) {
-          lastUserMessage.feedback_score = feedbackScore;
-        }
-        // Add the new AI message
-        return [...updatedMessages, aiMessage];
+        const updated = [...prev];
+        const lastUser = updated.find((m) => m.id === userMessageId);
+        if (lastUser) lastUser.feedback_score = feedbackScore;
+        return [...updated, aiMessage];
       });
 
-      // Calculate time spent in THIS viewing session so far
-      const timeSpentInCurrentView = currentMountTime
-        ? Math.round((new Date().getTime() - currentMountTime.getTime()) / 1000)
+      // 4️⃣ Session duration
+      const timeSpent = currentMountTime
+        ? Math.round((Date.now() - currentMountTime.getTime()) / 1000)
         : 0;
 
-      // Calculate the CURRENT cumulative duration
-      const currentTotalDuration =
-        storedDurationSeconds + timeSpentInCurrentView;
+      const cumulativeDuration = storedDurationSeconds + timeSpent;
 
-      // Insert conversation turn
-      await supabase.from("conversations").insert({
-        session_id: sessionId,
-        scenario: selectedScenario.id,
-        user_message: currentInput,
-        ai_response: aiResponse,
-        corrected_text: correctedText,
-        correction_explanation: correctionExplanation,
-        feedback_score: feedbackScore,
-        context_summary: contextSummary,
-        conversation_context: {
-          scenario: selectedScenario.id,
-          turn: messages.length + 1,
-          user_level: profile?.proficiency_level || "beginner",
-        },
-      });
-
-      // Update the learning_sessions table with the CUMULATIVE duration and new stats
       await supabase
         .from("learning_sessions")
         .update({
           exercises_completed: newMessageCount,
-          duration: currentTotalDuration, // Save the cumulative duration
-          score: Math.round(currentAvgScore * 10), // Save the new average score (multiplied by 10 for integer storage if needed)
+          duration: cumulativeDuration,
+          score: Math.round(currentAvgScore * 10), // 0–100 scale
         })
         .eq("id", sessionId);
-      // ✅ Update conversation quality accuracy in learning_analytics table
+
       if (user?.id) {
-        const conversationQualityPercent = (currentAvgScore / 5) * 100; // normalize 0–100
+        const qualityPercent = (currentAvgScore / 10) * 100;
         await updateConversationQuality(
           user.id,
-          conversationQualityPercent,
-          currentTotalDuration
+          qualityPercent,
+          cumulativeDuration
         );
       }
 
-      // Update local state to reflect the new stored duration
-      setStoredDurationSeconds(currentTotalDuration);
+      setStoredDurationSeconds(cumulativeDuration);
 
-      // 3. Check for message limit after saving the exchange
+      // 5️⃣ Completion logic
       if (newMessageCount * 2 >= MESSAGE_LIMIT) {
         completeSession(currentAvgScore);
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // Use custom alert replacement
+    } catch (error: any) {
+      toast({
+        description: error?.message as string,
+        variant: "destructive",
+      });
+      console.error("Chat Error:", error);
       setMessages((prev) => [
         ...prev,
         {
-          id: `system-error-${Date.now()}`,
-          content:
-            "❌ Failed to send message or process AI response. Please try again.",
+          id: `err-${Date.now()}`,
+          content: "❌ AI connection failed. Please try again.",
           isUser: false,
           timestamp: new Date(),
-          corrected: "ERROR",
-          correction_explanation: "Network or API error.",
         },
       ]);
     } finally {
-      setIsLoading(false); // END LOADING
+      setIsLoading(false);
     }
   };
 
