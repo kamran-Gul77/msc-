@@ -41,7 +41,7 @@ import { updateConversationQuality } from "@/lib/supabase/apiCalls";
 import { useToast } from "@/hooks/use-toast";
 
 // --- Constants ---
-const MESSAGE_LIMIT = 5;
+const MESSAGE_LIMIT = 50;
 
 // --- Interface Definitions ---
 
@@ -397,6 +397,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         .select("*")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true });
+      console.log("data xx", data);
 
       if (error) throw error;
 

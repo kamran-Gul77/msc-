@@ -1,12 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { BufferWindowMemory } from "@langchain/classic/memory";
-import {
-  ChatPromptTemplate,
-  MessagesPlaceholder,
-} from "@langchain/core/prompts";
 
 /* ---------------- MEMORY STORE ---------------- */
-
 const memoryStore = new Map<string, BufferWindowMemory>();
 
 function getSessionMemory(sessionId: string): BufferWindowMemory {
@@ -14,7 +9,7 @@ function getSessionMemory(sessionId: string): BufferWindowMemory {
     memoryStore.set(
       sessionId,
       new BufferWindowMemory({
-        k: 10,
+        k: 5, // keep only last 5 messages
         returnMessages: true,
         memoryKey: "history",
       })
@@ -24,7 +19,6 @@ function getSessionMemory(sessionId: string): BufferWindowMemory {
 }
 
 /* ---------------- SAFE JSON PARSER ---------------- */
-
 function safeJsonParse(text: string): ConversationAIResponse | null {
   try {
     const start = text.indexOf("{");
@@ -37,7 +31,6 @@ function safeJsonParse(text: string): ConversationAIResponse | null {
 }
 
 /* ---------------- RESPONSE TYPE ---------------- */
-
 export interface ConversationAIResponse {
   ai_reply: string;
   feedback_score: number;
@@ -46,7 +39,6 @@ export interface ConversationAIResponse {
 }
 
 /* ---------------- MAIN CHAIN ---------------- */
-
 export async function runConversationChain({
   sessionId,
   message,
@@ -63,7 +55,7 @@ export async function runConversationChain({
   topic?: string;
 }): Promise<ConversationAIResponse> {
   const llm = new ChatGoogleGenerativeAI({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     apiKey: process.env.GEMINI_API_KEY,
     temperature: 0.6,
   });
@@ -71,12 +63,20 @@ export async function runConversationChain({
   const memory = getSessionMemory(sessionId);
   const { history } = await memory.loadMemoryVariables({});
 
-  /* ---------------- PROMPT ---------------- */
+  // Convert memory to messages
+  const memoryMessages =
+    Array.isArray(history) && history.length
+      ? history.slice(-5).map((h: any) => ({
+          role: h.isUser ? "user" : "assistant",
+          content: h.content || h.ai_reply || "",
+        }))
+      : [];
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    [
-      "system",
-      `
+  // Add system instruction and current user message
+  const conversationMessages = [
+    {
+      role: "system",
+      content: `
 You are an expert English conversation tutor.
 
 STRICT RULES:
@@ -85,38 +85,27 @@ STRICT RULES:
 - No explanations outside JSON
 
 JSON FORMAT:
-{{
+{
   "ai_reply": "string",
   "feedback_score": number,
   "corrected_text": "string | null",
   "correction_explanation": "string | null"
-}}
+}
 
-Context: {context}
-Topic: {topic}
-Level: {level}
-    `.trim(),
-    ],
-    new MessagesPlaceholder("history"),
-    ["human", "{input}"],
-  ]);
+Context: ${context}
+Topic: ${topic || scenario}
+Level: ${proficiencyLevel}
+      `,
+    },
+    ...memoryMessages,
+    { role: "user", content: message },
+  ];
 
-  /* ---------------- CHAIN ---------------- */
+  // ✅ Wrap in array of arrays for LangChain generate
+  const rawResponse = await llm.generate([conversationMessages]);
 
-  const chain = prompt.pipe(llm);
-
-  const rawResponse = await chain.invoke({
-    input: message,
-    context,
-    topic: topic || scenario,
-    level: proficiencyLevel,
-    history,
-  });
-
-  const rawText =
-    typeof rawResponse.content === "string"
-      ? rawResponse.content
-      : JSON.stringify(rawResponse.content);
+  // Extract text safely
+  const rawText = rawResponse.generations?.[0]?.[0]?.text ?? "{}";
 
   const result = safeJsonParse(rawText);
 
@@ -124,11 +113,8 @@ Level: {level}
     throw new Error("Gemini returned invalid JSON");
   }
 
-  /* ---------------- SAVE MEMORY ---------------- */
-
+  // Save context
   await memory.saveContext({ input: message }, { output: result.ai_reply });
-
-  /* ---------------- RETURN (🔥 FIX) ---------------- */
 
   return {
     ai_reply: result.ai_reply,
