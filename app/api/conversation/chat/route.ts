@@ -217,6 +217,8 @@
 //     );
 //   }
 // }
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { runConversationChain } from "@/lib/langchain/conversationChain";
@@ -230,7 +232,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Call the fixed LangChain logic
     const aiResponse = await runConversationChain({
       sessionId: body.session_id,
       message: body.message,
@@ -240,20 +241,24 @@ export async function POST(request: NextRequest) {
       topic: body.topic,
     });
 
-    // Save to Supabase (User Turn)
-    if (body.session_id) {
-      await supabase.from("conversations").insert({
-        session_id: body.session_id,
-        user_message: body.message,
-        feedback_score: aiResponse.feedback_score,
-        ai_response: aiResponse.ai_reply,
-        metadata: { level: body.proficiency_level },
-      });
+    const { error } = await supabase.from("conversations").insert({
+      session_id: body.session_id,
+      scenario: body.scenario,
+      user_message: body.message,
+      ai_response: aiResponse.ai_reply,
+      feedback_score: aiResponse.feedback_score,
+      corrected_text: aiResponse.corrected_text,
+      correction_explanation: aiResponse.correction_explanation,
+    });
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      throw error;
     }
 
     return NextResponse.json(aiResponse);
   } catch (error: any) {
-    console.error("Chain Error:", error);
+    console.error("Chat route error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,16 +1,16 @@
 import { createClient } from "@/lib/supabase/client";
 import { NextRequest, NextResponse } from "next/server";
-// api/conversation/chat/history route
+// api/conversation/history route
+
 export async function POST(request: NextRequest) {
   try {
-    const { session_id, scenario } = await request.json(); // FIX: scenario not scenario_id
+    const { session_id } = await request.json(); // FIX: scenario not scenario_id
     const supabase = createClient();
 
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
       .eq("session_id", session_id)
-      .eq("scenario", scenario) // FIX
       .order("created_at", { ascending: true });
 
     if (error) {

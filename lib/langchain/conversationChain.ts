@@ -9,7 +9,7 @@ function getSessionMemory(sessionId: string): BufferWindowMemory {
     memoryStore.set(
       sessionId,
       new BufferWindowMemory({
-        k: 5, // keep only last 5 messages
+        k: 10, // keep only last 5 messages
         returnMessages: true,
         memoryKey: "history",
       })

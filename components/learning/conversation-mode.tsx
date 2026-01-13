@@ -41,7 +41,7 @@ import { updateConversationQuality } from "@/lib/supabase/apiCalls";
 import { useToast } from "@/hooks/use-toast";
 
 // --- Constants ---
-const MESSAGE_LIMIT = 50;
+const MESSAGE_LIMIT = 2;
 
 // --- Interface Definitions ---
 
@@ -392,14 +392,20 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
   const loadConversation = async (sessionId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true });
-      console.log("data xx", data);
+      const res = await fetch("/api/conversation/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+        }),
+      });
 
-      if (error) throw error;
+      const result = await res.json();
+      console.log("result", result);
+
+      if (!result.ok) throw new Error(result.error);
+
+      const data = result.messages;
 
       if (!data || data.length === 0) {
         setMessages([]);
@@ -411,7 +417,6 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       let userMessageCount = 0;
 
       data.forEach((row: any, index: number) => {
-        // User message first
         if (row.user_message && row.user_message !== "SYSTEM START") {
           loadedMessages.push({
             id: `user-${row.id || index}`,
@@ -420,9 +425,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
             timestamp: new Date(row.created_at),
             feedback_score: row.feedback_score || undefined,
           });
-          if (row.feedback_score) {
-            totalScore += row.feedback_score;
-          }
+
+          if (row.feedback_score) totalScore += row.feedback_score;
           userMessageCount++;
         }
 
@@ -443,8 +447,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         messageCount: userMessageCount,
         totalUserScore: totalScore,
       });
-
-      if (userMessageCount * 2 >= MESSAGE_LIMIT) {
+      if (userMessageCount >= MESSAGE_LIMIT) {
         setIsSessionComplete(true);
       }
     } catch (err) {
@@ -453,7 +456,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   };
 
   const completeSession = async (finalAverageScore: number) => {
-    if (!sessionId || isSessionComplete) return;
+    if (!sessionId) return;
 
     setIsSessionComplete(true);
 
@@ -537,7 +540,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
         await loadConversation(existingSession.id); // Load the messages
 
-        if (messageCount * 2 >= MESSAGE_LIMIT) {
+        if (messageCount >= MESSAGE_LIMIT) {
           setIsSessionComplete(true);
         }
 
@@ -702,8 +705,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       setStoredDurationSeconds(cumulativeDuration);
 
       // 5️⃣ Completion logic
-      if (newMessageCount * 2 >= MESSAGE_LIMIT) {
-        completeSession(currentAvgScore);
+      if (newMessageCount >= MESSAGE_LIMIT) {
+        await completeSession(currentAvgScore);
       }
     } catch (error: any) {
       toast({
