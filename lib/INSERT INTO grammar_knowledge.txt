@@ -1,0 +1,178 @@
+INSERT INTO grammar_knowledge
+(title, rule, explanation, examples, proficiency_level)
+VALUES
+-- BEGINNER LEVEL
+('Past Simple',
+ 'Use the past simple tense for completed actions in the past.',
+ 'The past simple tense describes actions that happened at a specific time in the past.',
+ 'I visited my grandmother yesterday. He watched a movie last night.',
+ 'beginner'),
+
+('Future Simple',
+ 'Use "will" + verb for actions in the future.',
+ 'The future simple tense indicates actions that will happen later.',
+ 'I will call you tomorrow. She will travel to Paris next week.',
+ 'beginner'),
+
+('Countable & Uncountable Nouns',
+ 'Use "many" with countable nouns and "much" with uncountable nouns.',
+ 'Countable nouns can be counted, uncountable nouns cannot.',
+ 'I have many apples. There is much water in the bottle.',
+ 'beginner'),
+
+('Simple Prepositions',
+ 'Use "in", "on", "at" for time and place.',
+ 'Prepositions indicate relationships of time, place, and movement.',
+ 'I am at the park. The book is on the table. We met in July.',
+ 'beginner'),
+
+-- INTERMEDIATE LEVEL
+('Present Perfect',
+ 'Use present perfect to link past actions with the present.',
+ 'This tense shows actions that happened at an unspecified time in the past.',
+ 'I have finished my homework. She has visited London twice.',
+ 'intermediate'),
+
+('Past Continuous',
+ 'Use past continuous for ongoing actions in the past.',
+ 'Past continuous describes actions that were in progress at a specific time in the past.',
+ 'I was reading when he called. They were playing football all afternoon.',
+ 'intermediate'),
+
+('Conditional Sentences Type 1',
+ 'Use "if + present simple, will + verb" for real future possibilities.',
+ 'Type 1 conditionals describe possible events in the future.',
+ 'If it rains, I will stay home. She will pass if she studies.',
+ 'intermediate'),
+
+('Modals for Advice',
+ 'Use "should" and "ought to" for giving advice.',
+ 'These modals suggest actions that are recommended but not mandatory.',
+ 'You should see a doctor. He ought to apologize.',
+ 'intermediate'),
+
+('Relative Clauses',
+ 'Use "who", "which", "that" to give extra information about nouns.',
+ 'Relative clauses describe or identify nouns more clearly.',
+ 'The man who called you is my uncle. The book that I bought is new.',
+ 'intermediate'),
+
+-- ADVANCED LEVEL
+('Passive Voice',
+ 'Use passive voice to focus on the action rather than the subject.',
+ 'The subject receives the action rather than performing it.',
+ 'The cake was baked by Mary. The report will be finished tomorrow.',
+ 'advanced'),
+
+('Reported Speech',
+ 'Use reporting verbs and change tense when reporting someone’s words.',
+ 'Reported speech conveys what someone else said, with tense adjustments.',
+ 'He said he was tired. She told me she would come later.',
+ 'advanced'),
+
+('Conditional Sentences Type 3',
+ 'Use "if + past perfect, would have + past participle" for unreal past situations.',
+ 'Type 3 conditionals describe hypothetical past events that didn’t happen.',
+ 'If I had studied, I would have passed. She would have come if she had been invited.',
+ 'advanced'),
+
+('Gerunds and Infinitives',
+ 'Use gerunds (-ing) and infinitives (to + verb) correctly after certain verbs.',
+ 'Some verbs require gerunds, others infinitives.',
+ 'I enjoy swimming. I want to learn Spanish.',
+ 'advanced'),
+
+('Advanced Phrasal Verbs',
+ 'Phrasal verbs combine verbs with particles to create new meanings.',
+ 'Many common English verbs form phrases that change the meaning significantly.',
+ 'She gave up smoking. He ran into an old friend yesterday.',
+ 'advanced');
+INSERT INTO grammar_knowledge
+(title, rule, explanation, examples, proficiency_level)
+VALUES
+-- BEGINNER LEVEL
+('Past Simple',
+ 'Use the past simple tense for completed actions in the past.',
+ 'The past simple tense describes actions that happened at a specific time in the past.',
+ 'I visited my grandmother yesterday. He watched a movie last night.',
+ 'beginner'),
+
+('Future Simple',
+ 'Use "will" + verb for actions in the future.',
+ 'The future simple tense indicates actions that will happen later.',
+ 'I will call you tomorrow. She will travel to Paris next week.',
+ 'beginner'),
+
+('Countable & Uncountable Nouns',
+ 'Use "many" with countable nouns and "much" with uncountable nouns.',
+ 'Countable nouns can be counted, uncountable nouns cannot.',
+ 'I have many apples. There is much water in the bottle.',
+ 'beginner'),
+
+('Simple Prepositions',
+ 'Use "in", "on", "at" for time and place.',
+ 'Prepositions indicate relationships of time, place, and movement.',
+ 'I am at the park. The book is on the table. We met in July.',
+ 'beginner'),
+
+-- INTERMEDIATE LEVEL
+('Present Perfect',
+ 'Use present perfect to link past actions with the present.',
+ 'This tense shows actions that happened at an unspecified time in the past.',
+ 'I have finished my homework. She has visited London twice.',
+ 'intermediate'),
+
+('Past Continuous',
+ 'Use past continuous for ongoing actions in the past.',
+ 'Past continuous describes actions that were in progress at a specific time in the past.',
+ 'I was reading when he called. They were playing football all afternoon.',
+ 'intermediate'),
+
+('Conditional Sentences Type 1',
+ 'Use "if + present simple, will + verb" for real future possibilities.',
+ 'Type 1 conditionals describe possible events in the future.',
+ 'If it rains, I will stay home. She will pass if she studies.',
+ 'intermediate'),
+
+('Modals for Advice',
+ 'Use "should" and "ought to" for giving advice.',
+ 'These modals suggest actions that are recommended but not mandatory.',
+ 'You should see a doctor. He ought to apologize.',
+ 'intermediate'),
+
+('Relative Clauses',
+ 'Use "who", "which", "that" to give extra information about nouns.',
+ 'Relative clauses describe or identify nouns more clearly.',
+ 'The man who called you is my uncle. The book that I bought is new.',
+ 'intermediate'),
+
+-- ADVANCED LEVEL
+('Passive Voice',
+ 'Use passive voice to focus on the action rather than the subject.',
+ 'The subject receives the action rather than performing it.',
+ 'The cake was baked by Mary. The report will be finished tomorrow.',
+ 'advanced'),
+
+('Reported Speech',
+ 'Use reporting verbs and change tense when reporting someone’s words.',
+ 'Reported speech conveys what someone else said, with tense adjustments.',
+ 'He said he was tired. She told me she would come later.',
+ 'advanced'),
+
+('Conditional Sentences Type 3',
+ 'Use "if + past perfect, would have + past participle" for unreal past situations.',
+ 'Type 3 conditionals describe hypothetical past events that didn’t happen.',
+ 'If I had studied, I would have passed. She would have come if she had been invited.',
+ 'advanced'),
+
+('Gerunds and Infinitives',
+ 'Use gerunds (-ing) and infinitives (to + verb) correctly after certain verbs.',
+ 'Some verbs require gerunds, others infinitives.',
+ 'I enjoy swimming. I want to learn Spanish.',
+ 'advanced'),
+
+('Advanced Phrasal Verbs',
+ 'Phrasal verbs combine verbs with particles to create new meanings.',
+ 'Many common English verbs form phrases that change the meaning significantly.',
+ 'She gave up smoking. He ran into an old friend yesterday.',
+ 'advanced');
