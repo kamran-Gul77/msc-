@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { withGeminiRetry } from "@/lib/ai/gemeniFreeKeys";
 
 /* ================= CLIENTS ================= */
 
@@ -9,19 +10,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const llm = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-});
-
-const embeddingModel = genAI.getGenerativeModel({
-  model: "text-embedding-004",
-});
+/* ================= LLM & Embedding Models ================= */
+// These will now be dynamically generated inside withGeminiRetry for LLM
+const embeddingModel = new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY!
+).getGenerativeModel({ model: "text-embedding-004" });
 
 /* ================= CONSTANTS ================= */
 
-// realistic grammar similarity
 const MIN_SIMILARITY = 0.32;
 const RAG_LIMIT = 3;
 
@@ -52,9 +48,7 @@ export async function POST(req: Request) {
       );
     }
 
-    /* =====================================================
-       1️⃣ CHECK ANSWER MODE
-    ===================================================== */
+    /* ================= 1️⃣ CHECK ANSWER MODE ================= */
 
     if (exerciseId) {
       if (!userAnswer) {
@@ -83,10 +77,7 @@ export async function POST(req: Request) {
 
       await supabase
         .from("grammar_exercises")
-        .update({
-          user_answer: userAnswer,
-          is_correct: isCorrect,
-        })
+        .update({ user_answer: userAnswer, is_correct: isCorrect })
         .eq("id", exerciseId);
 
       return NextResponse.json({
@@ -96,9 +87,7 @@ export async function POST(req: Request) {
       });
     }
 
-    /* =====================================================
-       2️⃣ GENERATE NEW EXERCISE (RAG)
-    ===================================================== */
+    /* ================= 2️⃣ GENERATE NEW EXERCISE (RAG) ================= */
 
     if (!proficiency_level) {
       return NextResponse.json(
@@ -109,8 +98,7 @@ export async function POST(req: Request) {
 
     const level = proficiency_level.toLowerCase();
 
-    /* ---------- Avoid repetition ---------- */
-
+    // Already attempted sentences
     const { data: attempted } = await supabase
       .from("grammar_exercises")
       .select("sentence")
@@ -118,16 +106,13 @@ export async function POST(req: Request) {
 
     const usedSentences = new Set(attempted?.map((e) => e.sentence) || []);
 
-    /* ---------- Embed neutral grammar intent ---------- */
-
+    // Embed neutral grammar intent
     const embeddingResult = await embeddingModel.embedContent(
       "english grammar exercise"
     );
-
     const queryEmbedding = embeddingResult.embedding.values;
 
-    /* ---------- VECTOR RAG (NO FILTERS) ---------- */
-
+    // VECTOR RAG
     const { data: chunks, error } = await supabase.rpc(
       "match_grammar_knowledge",
       {
@@ -144,8 +129,6 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ---------- Confidence guard ---------- */
-
     const { data: attemptedRules } = await supabase
       .from("grammar_exercises")
       .select("grammar_rule")
@@ -157,10 +140,7 @@ export async function POST(req: Request) {
       (r) => r.similarity >= MIN_SIMILARITY && !usedRules.has(r.title)
     );
 
-    if (!bestRule) {
-      // fallback if all rules already used
-      bestRule = shuffle(chunks)[0];
-    }
+    if (!bestRule) bestRule = shuffle(chunks)[0];
 
     if (bestRule.similarity < MIN_SIMILARITY) {
       return NextResponse.json(
@@ -169,9 +149,7 @@ export async function POST(req: Request) {
       );
     }
 
-    /* =====================================================
-       3️⃣ TOKEN-OPTIMIZED PROMPT
-    ===================================================== */
+    /* ================= 3️⃣ TOKEN-OPTIMIZED PROMPT (WITH RETRY) ================= */
 
     const prompt = `
 You are an English grammar teacher.
@@ -193,41 +171,29 @@ Return ONLY valid JSON.
 }
 `;
 
-    const aiResult = await llm.generateContent(prompt);
-    const raw = aiResult.response.text();
+    const exercise = await withGeminiRetry(async (genAI) => {
+      const llm = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const aiResult = await llm.generateContent(prompt);
+      const raw = aiResult.response.text();
+      try {
+        const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+        if (!parsed?.sentence || !parsed?.correct_answer)
+          throw new Error("Incomplete exercise");
+        if (usedSentences.has(parsed.sentence))
+          throw new Error("Duplicate exercise generated");
+        return parsed;
+      } catch (err) {
+        throw new Error("Invalid AI JSON");
+      }
+    });
 
-    let exercise;
-    try {
-      exercise = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    } catch {
-      return NextResponse.json({ error: "Invalid AI JSON" }, { status: 500 });
-    }
-
-    if (!exercise?.sentence || !exercise?.correct_answer) {
-      return NextResponse.json(
-        { error: "Incomplete exercise" },
-        { status: 500 }
-      );
-    }
-
-    if (usedSentences.has(exercise.sentence)) {
-      return NextResponse.json(
-        { error: "Duplicate exercise generated" },
-        { status: 409 }
-      );
-    }
-
-    /* ---------- Options ---------- */
-
+    // Options
     const options = shuffle([
       exercise.correct_answer,
       ...generateDistractors(exercise.correct_answer),
     ]);
 
-    /* =====================================================
-       4️⃣ SAVE TO POOL
-    ===================================================== */
-
+    // Save to pool
     const { data: poolRow } = await supabase
       .from("grammar_pool")
       .insert([
@@ -244,12 +210,9 @@ Return ONLY valid JSON.
       .select()
       .single();
 
-    /* =====================================================
-       5️⃣ SAVE USER EXERCISE
-    ===================================================== */
-
     const { id: _, ...exerciseData } = poolRow;
 
+    // Save user exercise
     const { data: savedExercise } = await supabase
       .from("grammar_exercises")
       .insert([

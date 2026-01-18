@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,22 +9,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   CheckCircle,
   XCircle,
-  Star,
   RefreshCw,
   Eye,
   EyeOff,
+  Star,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers";
 import { useToast } from "@/hooks/use-toast";
-import { tr } from "zod/v4/locales";
 
-/* ================= TYPES ================= */
+interface VocabularyModeProps {
+  profile: any;
+}
 
 type ExerciseType = "synonym" | "antonym" | "context" | "recognition";
 
@@ -31,87 +35,72 @@ interface VocabularyExercise {
   word: string;
   exercise_type: ExerciseType;
   options: string[];
-  correct_answer: string;
   user_answer?: string | null;
+  correct_answer: string;
   is_correct?: boolean | null;
+  definition?: string;
   example_sentence?: string | null;
   created_at?: string;
 }
-
-interface VocabularyModeProps {
-  profile: any;
-}
-
-/* ================= COMPONENT ================= */
 
 export function VocabularyMode({ profile }: VocabularyModeProps) {
   const { user } = useAuth();
   const supabase = createClient();
   const { toast } = useToast();
 
-  /* ---------- UI STATE ---------- */
-  const [showStarter, setShowStarter] = useState(true);
-  const [showHistory, setShowHistory] = useState(false);
-
-  /* ---------- SESSION & EXERCISE ---------- */
+  // ------------------- STATES -------------------
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentExercise, setCurrentExercise] =
     useState<VocabularyExercise | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState("");
+  const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<VocabularyExercise[]>([]);
+  const [showStarter, setShowStarter] = useState(true);
 
-  /* ---------- LOADING STATES ---------- */
-  const [isStarting, setIsStarting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  /* ---------- STATS ---------- */
   const [stats, setStats] = useState<{
     total_exercises: number;
     total_correct: number;
     total_points: number;
+    live_accuracy?: string;
   } | null>(null);
 
-  const [history, setHistory] = useState<VocabularyExercise[]>([]);
-
-  /* ================= STATS ================= */
-
-  async function fetchStats() {
+  // ------------------- FETCH STATS -------------------
+  const fetchStats = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const res = await fetch("/api/vocabulary/stats", {
+      const resp = await fetch("/api/vocabulary/stats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user.id }),
       });
-      const data = await res.json();
-      setStats(data.stats);
+      if (!resp.ok) throw new Error("Failed to fetch stats");
+      const result = await resp.json();
+      setStats(result.stats);
     } catch (err) {
       console.error("fetchStats error:", err);
     }
-  }
+  }, [user?.id]);
 
   useEffect(() => {
     fetchStats();
-  }, [user?.id]);
+  }, [fetchStats]);
 
-  /* ================= SESSION ================= */
-
-  async function startNewSession() {
+  // ------------------- SESSION -------------------
+  const startNewSession = useCallback(async () => {
     if (!user?.id) return;
-
-    setIsStarting(true);
-    setShowStarter(false);
-
+    setLoading(true);
     try {
+      const difficulty = profile?.proficiency_level || "beginner";
       const { data, error } = await supabase
         .from("learning_sessions")
         .insert({
           user_id: user.id,
           mode: "vocabulary",
-          difficulty_level: profile?.proficiency_level || "beginner",
+          difficulty_level: difficulty,
         })
         .select()
         .single();
@@ -119,262 +108,533 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
       if (error || !data) {
         setShowStarter(true);
 
-        throw new Error(error?.message || "Failed to start session");
+        toast({
+          title: "Failed to start session",
+          description: error?.message || "Unknown error",
+          variant: "destructive",
+        });
+        return;
       }
 
       setSessionId(data.id);
       await generateNewExercise(data.id);
     } catch (err) {
       toast({
-        title: "Session failed",
-        description: err instanceof Error ? err.message : "Please try again.",
+        title: "Unexpected error",
+        description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
-
       setShowStarter(true);
-      setSessionId(null);
+      console.error("startNewSession error:", err);
     } finally {
-      setShowStarter(true);
-
-      setIsStarting(false);
+      setLoading(false);
     }
-  }
+  }, [profile?.proficiency_level, supabase, toast, user?.id]);
 
-  /* ================= EXERCISE ================= */
+  // ------------------- EXERCISES -------------------
+  const generateNewExercise = useCallback(
+    async (providedSessionId?: string) => {
+      const sid = providedSessionId || sessionId;
+      if (!user?.id || !sid) return;
 
-  async function generateNewExercise(providedSessionId?: string) {
-    const sid = providedSessionId || sessionId;
-    if (!sid || !user?.id) return;
+      setLoading(true);
+      setSelectedAnswer("");
+      setShowResult(false);
+      setCurrentExercise(null);
 
-    setIsGenerating(true);
-    setCurrentExercise(null);
-    setSelectedAnswer("");
-    setShowResult(false);
+      try {
+        const resp = await fetch("/api/vocabulary/poll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_id: sid,
+            user_id: user.id,
+            proficiency_level: profile?.proficiency_level || "beginner",
+          }),
+        });
 
-    try {
-      const res = await fetch("/api/vocabulary/poll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sid,
-          user_id: user.id,
-          proficiency_level: profile?.proficiency_level || "beginner",
-        }),
-      });
+        if (!resp.ok) {
+          setShowStarter(true);
+          const errData = await resp.json();
+          throw new Error(errData.error || "All exercises completed!");
+        }
 
-      const data = await res.json();
+        const result = await resp.json();
+        const exerciseRow = result.exercise ?? result;
 
-      if (!res.ok) {
+        const exercise: VocabularyExercise = {
+          id: exerciseRow.id,
+          word: exerciseRow.word,
+          exercise_type: exerciseRow.exercise_type,
+          options: Array.isArray(exerciseRow.options)
+            ? exerciseRow.options
+            : exerciseRow.options
+            ? JSON.parse(exerciseRow.options)
+            : [],
+          correct_answer: exerciseRow.correct_answer,
+          definition: exerciseRow.definition || undefined,
+          example_sentence:
+            exerciseRow.example_sentence === undefined
+              ? null
+              : exerciseRow.example_sentence,
+          created_at: exerciseRow.created_at,
+        };
+
+        setCurrentExercise(exercise);
+        setStartTime(Date.now());
+      } catch (err) {
+        toast({
+          title: "Failed to load exercise",
+          description: err instanceof Error ? err.message : String(err),
+          variant: "destructive",
+        });
         setShowStarter(true);
-        setIsStarting(true);
-
-        throw new Error(data?.error || "No more exercises available");
+        console.error("generateNewExercise error:", err);
+      } finally {
+        setLoading(false);
       }
+    },
+    [profile?.proficiency_level, sessionId, user?.id, toast]
+  );
 
-      const row = data.exercise ?? data;
-
-      setCurrentExercise({
-        id: row.id,
-        word: row.word,
-        exercise_type: row.exercise_type,
-        options: Array.isArray(row.options)
-          ? row.options
-          : JSON.parse(row.options || "[]"),
-        correct_answer: row.correct_answer,
-        example_sentence: row.example_sentence ?? null,
-        created_at: row.created_at,
-      });
-
-      setStartTime(Date.now());
-    } catch (err) {
-      setShowStarter(true);
-      setIsStarting(true);
-      toast({
-        title: "Failed to load exercise",
-        description: err instanceof Error ? err.message : "Try again",
-        variant: "destructive",
-      });
-
-      setSessionId(null);
-    } finally {
-      setIsStarting(true);
-
-      setShowStarter(true);
-      setIsGenerating(false);
-    }
-  }
-
-  /* ================= ANSWER ================= */
-
-  async function handleAnswer() {
-    if (!currentExercise || !selectedAnswer || !user?.id) return;
-
-    setIsSubmitting(true);
+  // ------------------- HANDLE ANSWER -------------------
+  const handleAnswer = useCallback(async () => {
+    if (!currentExercise || !sessionId || !user?.id || !selectedAnswer) return;
 
     const correct = selectedAnswer === currentExercise.correct_answer;
     setIsCorrect(correct);
     setShowResult(true);
 
-    try {
-      await supabase
-        .from("vocabulary_exercises")
-        .update({
-          user_answer: selectedAnswer,
-          is_correct: correct,
-          time_taken: startTime
-            ? Math.round((Date.now() - startTime) / 1000)
-            : 0,
-        })
-        .eq("id", currentExercise.id);
+    const timeSpent = startTime
+      ? Math.round((Date.now() - startTime) / 1000)
+      : 0;
 
-      await fetchStats();
+    try {
+      await Promise.all([
+        supabase
+          .from("vocabulary_exercises")
+          .update({
+            user_answer: selectedAnswer,
+            is_correct: correct,
+            time_taken: timeSpent,
+            options: currentExercise.options,
+            example_sentence: currentExercise.example_sentence || null,
+          })
+          .eq("id", currentExercise.id),
+        fetchStats(),
+      ]);
+      updateGrammarAccuracy(user.id);
     } catch (err) {
       toast({
         title: "Failed to save answer",
-        description: err instanceof Error ? err.message : "Try again",
+        description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+      console.error("handleAnswer error:", err);
     }
-  }
+  }, [
+    currentExercise,
+    fetchStats,
+    selectedAnswer,
+    sessionId,
+    startTime,
+    supabase,
+    toast,
+    user?.id,
+  ]);
 
-  /* ================= HISTORY ================= */
+  // ------------------- GRAMMAR ACCURACY -------------------
+  const updateGrammarAccuracy = useCallback(
+    async (userId: string) => {
+      try {
+        const { data: exercises, error } = await supabase
+          .from("vocabulary_exercises")
+          .select("is_correct")
+          .eq("user_id", userId);
 
-  async function fetchHistory() {
-    if (!user?.id) return;
+        if (error || !exercises?.length) return;
+
+        const total = exercises.length;
+        const correct = exercises.filter((e) => e.is_correct).length;
+        const accuracy = (correct / total) * 100;
+
+        await supabase.from("learning_analytics").upsert(
+          {
+            user_id: userId,
+            date: new Date().toISOString().split("T")[0],
+            vocabulary_accuracy: accuracy,
+          },
+          { onConflict: "user_id,date" }
+        );
+
+        setStats((prev) => ({
+          ...(prev || {
+            total_exercises: 0,
+            total_correct: 0,
+            total_points: 0,
+          }),
+          live_accuracy: accuracy.toFixed(2),
+        }));
+      } catch (err) {
+        console.error("updateGrammarAccuracy error:", err);
+      }
+    },
+    [supabase]
+  );
+
+  // ------------------- HISTORY -------------------
+  const fetchVocabularyHistory = useCallback(async (userId: string) => {
     try {
-      const res = await fetch(`/api/vocabulary/history?user_id=${user.id}`);
+      const res = await fetch(`/api/vocabulary/history?user_id=${userId}`);
       const data = await res.json();
-      setHistory(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) setHistory(data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching history:", err);
     }
-  }
+  }, []);
 
-  /* ================= UI ================= */
+  // ------------------- EXERCISE TITLE & DESC -------------------
+  const getExerciseTypeTitle = useCallback((type: ExerciseType) => {
+    switch (type) {
+      case "synonym":
+        return "Find the Synonym";
+      case "antonym":
+        return "Find the Antonym";
+      case "context":
+        return "Choose the Correct Usage";
+      case "recognition":
+        return "Word Recognition";
+      default:
+        return "Vocabulary Exercise";
+    }
+  }, []);
 
-  if (isGenerating && !currentExercise && !showStarter) {
+  const getExerciseDescription = useCallback((type: ExerciseType) => {
+    switch (type) {
+      case "synonym":
+        return "Select the word that means the same as the given word";
+      case "antonym":
+        return "Select the word that means the opposite of the given word";
+      case "context":
+        return "Choose how this word is correctly used in context";
+      case "recognition":
+        return "Identify the meaning of this word";
+      default:
+        return "Complete the vocabulary exercise";
+    }
+  }, []);
+
+  // ------------------- RENDER -------------------
+  if (loading && !currentExercise) {
     return (
-      <div className="flex justify-center py-12">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
+          <p className="text-gray-600">Generating personalized exercise...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* ---------- STATS ---------- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          icon={<BookOpen />}
-          label="Exercises"
-          value={stats?.total_exercises}
-        />
-        <StatCard
-          icon={<CheckCircle />}
-          label="Correct"
-          value={stats?.total_correct}
-        />
-        <StatCard icon={<Star />} label="Points" value={stats?.total_points} />
-      </div>
+      {/* ------------------- STATS ------------------- */}
+      {!currentExercise && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-[#212121] text-white shadow-md border-none">
+            <CardContent className="p-4 text-center">
+              <BookOpen className="h-6 w-6 mx-auto mb-2 text-[#bb86fc]" />
+              <p className="text-2xl font-bold">{stats?.total_exercises}</p>
+              <p className="text-sm text-gray-400">Exercises</p>
+            </CardContent>
+          </Card>
 
-      {/* ---------- HISTORY TOGGLE ---------- */}
-      <div className="flex justify-end">
+          <Card className="bg-[#212121] text-white shadow-md border-none">
+            <CardContent className="p-4 text-center">
+              <CheckCircle className="h-6 w-6 mx-auto mb-2 text-[#03dac6]" />
+              <p className="text-2xl font-bold">{stats?.total_correct}</p>
+              <p className="text-sm text-gray-400">Correct</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#212121] text-white shadow-md border-none">
+            <CardContent className="p-4 text-center">
+              <Star className="h-6 w-6 mx-auto mb-2 text-[#ffb300]" />
+              <p className="text-2xl font-bold">{stats?.total_points}</p>
+              <p className="text-sm text-gray-400">Points</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ------------------- HISTORY BUTTON ------------------- */}
+      <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           onClick={() => {
-            setShowHistory(!showHistory);
-            if (!showHistory) fetchHistory();
+            setShowHistory((prev) => {
+              const newState = !prev;
+              if (newState) fetchVocabularyHistory(user?.id as string);
+              return newState;
+            });
           }}
+          className="px-8 mt-6 py-4 hover:text-white bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
         >
           {showHistory ? <Eye /> : <EyeOff />}
-          {showHistory ? "Close History" : "View History"}
+          <span>{showHistory ? "Close History" : "View History"}</span>
         </Button>
       </div>
 
-      {/* ---------- STARTER ---------- */}
-      {showStarter ? (
-        <div className="text-center py-12">
-          <p className="text-2xl font-semibold text-purple-600">
-            Ready to level up your vocabulary?
-          </p>
-
-          <Button
-            onClick={startNewSession}
-            disabled={isStarting}
-            className="mt-6"
-          >
-            {isStarting ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
+      {/* ------------------- HISTORY ------------------- */}
+      {showHistory && (
+        <Card className="bg-[#181818] text-white border border-[#303030]">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-white">
+              Vocabulary Exercise History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-gray-400">
+                No past vocabulary exercises found.
+              </p>
             ) : (
-              "Start Vocabulary Session"
+              <ul className="space-y-2">
+                {history.map((ex) => {
+                  const answered =
+                    ex.user_answer != null && ex.user_answer !== "";
+                  const correct = ex.is_correct && answered;
+                  return (
+                    <li key={ex.id} className="p-3 rounded bg-[#212121]">
+                      <p>
+                        <strong className="text-white">Word:</strong> {ex.word}
+                      </p>
+                      <p>
+                        <strong className="text-white">Exercise Type:</strong>{" "}
+                        {ex.exercise_type}
+                      </p>
+                      <p>
+                        <strong className="text-white">Your Answer:</strong>{" "}
+                        {answered ? (
+                          <span
+                            className={`font-semibold ${
+                              correct ? "text-green-400" : "text-red-400"
+                            }`}
+                          >
+                            {ex.user_answer}
+                          </span>
+                        ) : (
+                          <em className="text-gray-400">Not answered</em>
+                        )}
+                      </p>
+                      {!correct && answered && (
+                        <p>
+                          <strong className="text-white">
+                            Correct Answer:
+                          </strong>{" "}
+                          <span className="text-green-400 font-semibold">
+                            {ex.correct_answer}
+                          </span>
+                        </p>
+                      )}
+                      {ex.example_sentence && (
+                        <p className="text-sm text-gray-400 mt-1">
+                          <strong className="text-white">Example:</strong>{" "}
+                          {ex.example_sentence}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        {new Date(ex.created_at || "").toLocaleString()}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ------------------- STARTER ------------------- */}
+      {showStarter ? (
+        <div className="text-center my-6">
+          <p className="text-2xl font-semibold text-purple-600 animate-pulse">
+            Get ready to level up your Vocabulary skills!
+          </p>
+          <p className="mt-4 text-lg text-gray-700">
+            You’re about to embark on a fun journey to master Vocabulary. Let’s
+            start the session!
+          </p>
+          <button
+            onClick={() => {
+              setShowStarter(false);
+              startNewSession();
+            }}
+            className="px-8 mt-6 py-4 bg-[#303030] hover:bg-[#181818] text-[#fff] font-semibold rounded-lg shadow-lg border border-[#181818] transition-all duration-300"
+          >
+            Start the Vocabulary Session!
+          </button>
         </div>
       ) : (
         currentExercise && (
-          <Card className="max-w-3xl mx-auto bg-[#181818] text-white">
+          <Card className="max-w-4xl mx-auto bg-[#181818] border border-[#303030] text-white">
             <CardHeader className="text-center">
-              <Badge>{currentExercise.exercise_type}</Badge>
-              <CardTitle className="text-2xl">{currentExercise.word}</CardTitle>
+              <div className="flex justify-center mb-2">
+                <Badge
+                  variant="outline"
+                  className="border-purple-500 text-purple-400 bg-[#212121]"
+                >
+                  {getExerciseTypeTitle(currentExercise.exercise_type)}
+                </Badge>
+              </div>
+              <CardTitle className="text-2xl text-white">
+                {currentExercise.word}
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                {getExerciseDescription(currentExercise.exercise_type)}
+              </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-              <div className="grid gap-3">
-                {currentExercise.options.map((opt) => (
-                  <Button
-                    key={opt}
-                    disabled={showResult}
-                    variant={selectedAnswer === opt ? "default" : "outline"}
-                    onClick={() => setSelectedAnswer(opt)}
-                  >
-                    {opt}
-                  </Button>
-                ))}
+            <CardContent className="space-y-6">
+              {/* Definition */}
+              {currentExercise.definition && (
+                <div className="text-center p-4 bg-[#212121] rounded-lg border border-[#303030]">
+                  <p className="italic text-gray-300">
+                    {currentExercise.definition}
+                  </p>
+                </div>
+              )}
+
+              {/* Example */}
+              {currentExercise.example_sentence && (
+                <div className="text-center p-4 bg-[#212121] rounded-lg border border-[#303030]">
+                  <p className="text-gray-300">
+                    <strong className="text-white">Example:</strong>{" "}
+                    {currentExercise.example_sentence}
+                  </p>
+                </div>
+              )}
+
+              {/* Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {currentExercise.options.map((option, idx) => {
+                  const isCorrectOption =
+                    option === currentExercise.correct_answer;
+                  const isSelected = option === selectedAnswer;
+
+                  let btnClass = "";
+                  if (showResult) {
+                    if (isCorrectOption)
+                      btnClass =
+                        "bg-green-900/30 border-green-500 text-green-400";
+                    else if (isSelected && !isCorrectOption)
+                      btnClass = "bg-red-900/30 border-red-500 text-red-400";
+                    else btnClass = "opacity-60";
+                  } else if (isSelected) {
+                    btnClass =
+                      "bg-gradient-to-r from-purple-600 to-pink-600 text-white";
+                  }
+
+                  return (
+                    <Button
+                      key={idx}
+                      variant={isSelected ? "default" : "outline"}
+                      className={`h-auto min-h-16 text-left justify-start whitespace-normal break-words px-4 py-3 border border-[#303030] bg-[#212121] hover:bg-[#303030] ${btnClass}`}
+                      onClick={() => !showResult && setSelectedAnswer(option)}
+                      disabled={showResult}
+                    >
+                      <div className="flex items-start space-x-3 w-full">
+                        <div
+                          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-1 ${
+                            showResult && isCorrectOption
+                              ? "border-green-500 bg-green-500"
+                              : showResult && isSelected && !isCorrectOption
+                              ? "border-red-500 bg-red-500"
+                              : isSelected
+                              ? "border-purple-400 bg-purple-400"
+                              : "border-gray-500"
+                          }`}
+                        >
+                          {showResult && isCorrectOption ? (
+                            <CheckCircle className="h-4 w-4 text-white" />
+                          ) : showResult && isSelected && !isCorrectOption ? (
+                            <XCircle className="h-4 w-4 text-white" />
+                          ) : null}
+                        </div>
+                        <span className="flex-1 text-sm sm:text-base break-words">
+                          {option}
+                        </span>
+                      </div>
+                    </Button>
+                  );
+                })}
               </div>
 
-              {!showResult ? (
-                <Button
-                  onClick={handleAnswer}
-                  disabled={!selectedAnswer || isSubmitting}
+              {/* Result Feedback */}
+              {showResult && (
+                <div
+                  className={`p-4 rounded-lg text-center border ${
+                    isCorrect
+                      ? "bg-green-900/30 border-green-500 text-green-400"
+                      : "bg-red-900/30 border-red-500 text-red-400"
+                  }`}
                 >
-                  {isSubmitting ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Submit Answer"
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    {isCorrect ? (
+                      <CheckCircle className="h-6 w-6 text-green-400" />
+                    ) : (
+                      <XCircle className="h-6 w-6 text-red-400" />
+                    )}
+                    <span className="font-semibold text-lg">
+                      {isCorrect ? "Correct!" : "Incorrect"}
+                    </span>
+                  </div>
+                  {!isCorrect && (
+                    <p>
+                      The correct answer is:{" "}
+                      <strong className="text-green-400">
+                        {currentExercise.correct_answer}
+                      </strong>
+                    </p>
                   )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => generateNewExercise()}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Next Exercise"
-                  )}
-                </Button>
+                </div>
               )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-center flex-wrap gap-4">
+                {!showResult ? (
+                  <Button
+                    onClick={handleAnswer}
+                    disabled={!selectedAnswer}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
+                  >
+                    Submit Answer
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => generateNewExercise()}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
+                    >
+                      Next Exercise
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowStarter(true);
+                        setCurrentExercise(null);
+                      }}
+                      className="border-purple-500 text-purple-400 hover:bg-[#212121]"
+                    >
+                      Back
+                    </Button>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         )
       )}
     </div>
-  );
-}
-
-/* ================= SMALL COMPONENT ================= */
-
-function StatCard({ icon, label, value }: any) {
-  return (
-    <Card className="bg-[#212121] text-white text-center">
-      <CardContent className="p-4">
-        <div className="mx-auto mb-2">{icon}</div>
-        <p className="text-2xl font-bold">{value ?? 0}</p>
-        <p className="text-sm text-gray-400">{label}</p>
-      </CardContent>
-    </Card>
   );
 }

@@ -431,7 +431,12 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.[0]?.vocabulary_accuracy || 0}%</span>
+                      <span>
+                        {Math.round(
+                          Number(stats?.[0]?.vocabulary_accuracy ?? 0)
+                        )}
+                        %
+                      </span>
                     </div>
                     <Progress
                       color="#333"
@@ -453,7 +458,9 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Accuracy</span>
-                      <span>{stats?.[0]?.grammar_accuracy || 0}%</span>
+                      <span>
+                        {Math.round(Number(stats?.[0]?.grammar_accuracy ?? 0))}%
+                      </span>
                     </div>
                     <Progress
                       value={stats?.[0]?.grammar_accuracy || 0}
@@ -474,7 +481,12 @@ export function Dashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-white text-sm">
                       <span>Quality Score</span>
-                      <span>{stats?.[0]?.conversation_quality || 0}%</span>
+                      <span>
+                        {Math.round(
+                          Number(stats?.[0]?.conversation_quality ?? 0)
+                        )}
+                        %
+                      </span>
                     </div>
                     <Progress
                       value={stats?.[0]?.conversation_quality || 0}

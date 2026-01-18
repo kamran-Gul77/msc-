@@ -98,7 +98,15 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        setShowStarter(true);
+        toast({
+          title: "Failed to start session",
+          description: error?.message || "Unknown error",
+          variant: "destructive",
+        });
+        return;
+      }
 
       setSessionId(data.id);
       await generateNewExercise(data.id);
@@ -108,6 +116,8 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });
+      setShowStarter(true);
+
       console.error("Error starting session:", error);
     }
   };
@@ -171,6 +181,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       });
 
       if (!response.ok) {
+        setShowStarter(true);
         const errData = await response.json();
         throw new Error(errData.error || "you complete the exerciese congrats");
       }
@@ -199,6 +210,8 @@ export function GrammarMode({ profile }: GrammarModeProps) {
         description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });
+      setShowStarter(true);
+
       console.error("Error generating exercise:", error);
     } finally {
       setLoading(false);

@@ -1,16 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { withGeminiRetry } from "@/lib/ai/gemeniFreeKeys";
 
 export const dynamic = "force-dynamic"; // forces server-side rendering
 
+/** ================= Supabase Client ================= */
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+/** ================= Gemini API Retry Helper ================= */
 
+/** ================= Types ================= */
 interface VocabularyRequest {
   proficiency_level: string;
   session_id: string;
@@ -19,24 +22,23 @@ interface VocabularyRequest {
   user_id: string;
 }
 
-/**
- * 🔹 Helper: Generate new question using Gemini
- */
+/** ================= AI Question Generator ================= */
 async function generateUniqueAIQuestion(level: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  return withGeminiRetry(async (genAI) => {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  // Step 1: Fetch all existing words for this level
-  const { data: existingWords, error } = await supabase
-    .from("vocabulary_pool")
-    .select("word")
-    .eq("proficiency_level", level);
+    // Step 1: Fetch existing words
+    const { data: existingWords, error } = await supabase
+      .from("vocabulary_pool")
+      .select("word")
+      .eq("proficiency_level", level);
 
-  if (error) throw new Error("Failed to fetch existing words");
+    if (error) throw new Error("Failed to fetch existing words");
 
-  const wordList = existingWords?.map((w) => w.word) || [];
+    const wordList = existingWords?.map((w) => w.word) || [];
 
-  // Step 2: Single Gemini call with exclusion list
-  const prompt = `
+    // Step 2: Prompt
+    const prompt = `
 Generate one UNIQUE vocabulary exercise for ${level} English learners.
 Do NOT use any of these words: [${wordList.join(", ")}].
 
@@ -50,18 +52,20 @@ Respond strictly in JSON with:
 }
 `;
 
-  const result = await model.generateContent(prompt);
-  const raw = result.response
-    .text()
-    .replace(/```json|```/g, "")
-    .trim();
-  const parsed = JSON.parse(raw);
+    const result = await model.generateContent(prompt);
+    const raw = result.response
+      .text()
+      .replace(/```json|```/g, "")
+      .trim();
+    const parsed = JSON.parse(raw);
 
-  if (!parsed?.word) throw new Error("AI returned invalid exercise");
+    if (!parsed?.word) throw new Error("AI returned invalid exercise");
 
-  return parsed;
+    return parsed;
+  });
 }
 
+/** ================= POST Handler ================= */
 export async function POST(req: NextRequest) {
   try {
     const { proficiency_level, session_id, exerciseId, userAnswer, user_id } =
@@ -75,9 +79,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
 
-    /**
-     * ✅ 1. Answering an existing question
-     */
+    /** ================= 1. Answering an existing question ================= */
     if (exerciseId) {
       if (!userAnswer)
         return NextResponse.json(
@@ -100,12 +102,10 @@ export async function POST(req: NextRequest) {
       const isCorrect =
         exercise.correct_answer.trim().toLowerCase() ===
         userAnswer.trim().toLowerCase();
+
       await supabase
         .from("vocabulary_exercises")
-        .update({
-          user_answer: userAnswer,
-          is_correct: isCorrect,
-        })
+        .update({ user_answer: userAnswer, is_correct: isCorrect })
         .eq("id", exerciseId);
 
       return NextResponse.json({
@@ -114,16 +114,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    /**
-     * ✅ 2. Fetching a new exercise (pool-first, AI-fallback)
-     */
+    /** ================= 2. Fetching a new exercise (pool-first, AI-fallback) ================= */
     if (!proficiency_level)
       return NextResponse.json(
         { error: "Proficiency level required" },
         { status: 400 }
       );
 
-    // Get pool_ids already attempted by user
+    // Already attempted exercises
     const { data: attempted } = await supabase
       .from("vocabulary_exercises")
       .select("pool_id")

@@ -17,6 +17,32 @@ function getSessionMemory(sessionId: string): BufferWindowMemory {
   }
   return memoryStore.get(sessionId)!;
 }
+const GEMINI_API_KEYS = [
+  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
+  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
+  "AIzaSyC16SbaH7u7Jg18cPcsjiJOcMPNSwaA8KE",
+];
+async function withGeminiRetry<TClient, T>(
+  keys: string[],
+  createClient: (key: string) => TClient,
+  fn: (client: TClient) => Promise<T>
+): Promise<T> {
+  let lastError: any;
+
+  for (const key of keys) {
+    const client = createClient(key);
+    try {
+      return await fn(client);
+    } catch (err) {
+      console.warn(`Gemini API key failed: ${key}`, err);
+      lastError = err;
+    }
+  }
+
+  throw new Error(
+    `All Gemini API keys failed. Last error: ${lastError?.message || lastError}`
+  );
+}
 
 /* ---------------- SAFE JSON PARSER ---------------- */
 function safeJsonParse(text: string): ConversationAIResponse | null {
@@ -54,12 +80,6 @@ export async function runConversationChain({
   proficiencyLevel: string;
   topic?: string;
 }): Promise<ConversationAIResponse> {
-  const llm = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash",
-    apiKey: process.env.GEMINI_API_KEY,
-    temperature: 0.6,
-  });
-
   const memory = getSessionMemory(sessionId);
   const { history } = await memory.loadMemoryVariables({});
 
@@ -101,17 +121,23 @@ Level: ${proficiencyLevel}
     { role: "user", content: message },
   ];
 
-  // ✅ Wrap in array of arrays for LangChain generate
-  const rawResponse = await llm.generate([conversationMessages]);
-
-  // Extract text safely
-  const rawText = rawResponse.generations?.[0]?.[0]?.text ?? "{}";
-
-  const result = safeJsonParse(rawText);
-
-  if (!result) {
-    throw new Error("Gemini returned invalid JSON");
-  }
+  // ✅ Wrap the LLM call in withGeminiRetry
+  const result = await withGeminiRetry(
+    GEMINI_API_KEYS,
+    (key) =>
+      new ChatGoogleGenerativeAI({
+        model: "gemini-2.5-flash",
+        apiKey: key,
+        temperature: 0.6,
+      }),
+    async (llmClient) => {
+      const rawResponse = await llmClient.generate([conversationMessages]);
+      const rawText = rawResponse.generations?.[0]?.[0]?.text ?? "{}";
+      const parsed = safeJsonParse(rawText);
+      if (!parsed) throw new Error("Gemini returned invalid JSON");
+      return parsed;
+    }
+  );
 
   // Save context
   await memory.saveContext({ input: message }, { output: result.ai_reply });
