@@ -1048,10 +1048,10 @@ export function ConversationMode({ profile }: ConversationModeProps) {
             Avg Score: {averageScore > 0 ? averageScore.toFixed(1) : "N/A"}
           </span>
         </span>
-        <span className="flex items-center space-x-1">
+        {/* <span className="flex items-center space-x-1">
           <Clock className="h-4 w-4 text-blue-400" />
           <span>Duration: {durationInMinutes}m</span>
-        </span>
+        </span> */}
       </div>
       {/* Message Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh] custom-scrollbar">
