@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-/* -------------------- CLIENTS -------------------- */
+/* ================= CLIENTS ================= */
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,45 +19,58 @@ const embeddingModel = genAI.getGenerativeModel({
   model: "text-embedding-004",
 });
 
-/* -------------------- ROUTE -------------------- */
+/* ================= CONSTANTS ================= */
+
+// realistic grammar similarity
+const MIN_SIMILARITY = 0.32;
+const RAG_LIMIT = 3;
+
+/* ================= HELPERS ================= */
+
+const shuffle = (arr: any[]) => [...arr].sort(() => Math.random() - 0.5);
+
+const generateDistractors = (answer: string) => {
+  const base = answer.toLowerCase();
+  return shuffle([
+    base + "s",
+    base.replace(/ed$/, ""),
+    base.replace(/s$/, ""),
+  ]).slice(0, 2);
+};
+
+/* ================= ROUTE ================= */
 
 export async function POST(req: Request) {
   try {
     const { proficiency_level, session_id, exerciseId, userAnswer, user_id } =
       await req.json();
 
-    /* ---------- BASIC VALIDATION ---------- */
-
-    if (!user_id) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
-    }
-
-    if (!session_id) {
+    if (!user_id || !session_id) {
       return NextResponse.json(
-        { error: "Session ID required" },
+        { error: "user_id and session_id required" },
         { status: 400 }
       );
     }
 
     /* =====================================================
-       1️⃣ ANSWER CHECKING (UNCHANGED)
+       1️⃣ CHECK ANSWER MODE
     ===================================================== */
 
     if (exerciseId) {
       if (!userAnswer) {
         return NextResponse.json(
-          { error: "User answer required" },
+          { error: "userAnswer required" },
           { status: 400 }
         );
       }
 
-      const { data: exercise, error } = await supabase
+      const { data: exercise } = await supabase
         .from("grammar_exercises")
         .select("correct_answer, feedback")
         .eq("id", exerciseId)
         .single();
 
-      if (error || !exercise) {
+      if (!exercise) {
         return NextResponse.json(
           { error: "Exercise not found" },
           { status: 404 }
@@ -84,204 +97,177 @@ export async function POST(req: Request) {
     }
 
     /* =====================================================
-       2️⃣ FETCH / GENERATE NEW EXERCISE (RAG)
+       2️⃣ GENERATE NEW EXERCISE (RAG)
     ===================================================== */
 
     if (!proficiency_level) {
       return NextResponse.json(
-        { error: "Proficiency level required" },
+        { error: "proficiency_level required" },
         { status: 400 }
       );
     }
 
-    const normalizedLevel = proficiency_level.toLowerCase().trim();
+    const level = proficiency_level.toLowerCase();
 
-    /* ---------- ALREADY ATTEMPTED ---------- */
+    /* ---------- Avoid repetition ---------- */
 
     const { data: attempted } = await supabase
       .from("grammar_exercises")
       .select("sentence")
       .eq("user_id", user_id);
 
-    const attemptedSentences = attempted?.map((a) => a.sentence) || [];
+    const usedSentences = new Set(attempted?.map((e) => e.sentence) || []);
 
-    /* ---------- TRY POOL FIRST ---------- */
+    /* ---------- Embed neutral grammar intent ---------- */
 
-    const { data: poolExercises, error: poolErr } = await supabase
-      .from("grammar_pool")
-      .select("*")
-      .eq("proficiency_level", normalizedLevel);
+    const embeddingResult = await embeddingModel.embedContent(
+      "english grammar exercise"
+    );
 
-    if (poolErr) {
+    const queryEmbedding = embeddingResult.embedding.values;
+
+    /* ---------- VECTOR RAG (NO FILTERS) ---------- */
+
+    const { data: chunks, error } = await supabase.rpc(
+      "match_grammar_knowledge",
+      {
+        query_embedding: queryEmbedding,
+        match_threshold: MIN_SIMILARITY,
+        match_count: RAG_LIMIT,
+      }
+    );
+
+    if (error || !chunks || chunks.length === 0) {
       return NextResponse.json(
-        { error: "Failed to fetch grammar pool" },
+        { error: "No grammar knowledge found" },
         { status: 500 }
       );
     }
 
-    const availableExercises = poolExercises.filter(
-      (ex) => !attemptedSentences.includes(ex.sentence)
+    /* ---------- Confidence guard ---------- */
+
+    const { data: attemptedRules } = await supabase
+      .from("grammar_exercises")
+      .select("grammar_rule")
+      .eq("user_id", user_id);
+
+    const usedRules = new Set(attemptedRules?.map((e) => e.grammar_rule) || []);
+
+    let bestRule = shuffle(chunks).find(
+      (r) => r.similarity >= MIN_SIMILARITY && !usedRules.has(r.title)
     );
 
-    let exercise: any;
+    if (!bestRule) {
+      // fallback if all rules already used
+      bestRule = shuffle(chunks)[0];
+    }
 
-    /* =====================================================
-       3️⃣ USE POOL OR FALLBACK TO RAG + GEMINI
-    ===================================================== */
-
-    if (availableExercises.length > 0) {
-      exercise =
-        availableExercises[
-          Math.floor(Math.random() * availableExercises.length)
-        ];
-    } else {
-      /* ---------- RAG STEP 1: CREATE QUERY EMBEDDING ---------- */
-
-      const queryEmbeddingResult = await embeddingModel.embedContent(
-        `grammar exercise for ${normalizedLevel} English learners`
+    if (bestRule.similarity < MIN_SIMILARITY) {
+      return NextResponse.json(
+        { error: "Low-confidence grammar match" },
+        { status: 422 }
       );
-
-      const queryEmbedding = queryEmbeddingResult.embedding.values;
-
-      /* ---------- RAG STEP 2: RETRIEVE GRAMMAR KNOWLEDGE ---------- */
-
-      const { data: knowledgeChunks, error: ragErr } = await supabase.rpc(
-        "match_grammar_knowledge",
-        {
-          query_embedding: queryEmbedding,
-          match_count: 3,
-          level: normalizedLevel,
-        }
-      );
-
-      if (ragErr || !knowledgeChunks || knowledgeChunks.length === 0) {
-        return NextResponse.json(
-          { error: "No grammar knowledge found for RAG" },
-          { status: 500 }
-        );
-      }
-
-      const contextText = knowledgeChunks
-        .map(
-          (k: any, i: any) => `
-Rule ${i + 1}:
-${k.rule}
-
-Explanation:
-${k.explanation}
-
-Examples:
-${k.examples}
-`
-        )
-        .join("\n\n");
-
-      /* ---------- RAG STEP 3: GROUNDED PROMPT ---------- */
-
-      const prompt = `
-You are an expert English grammar teacher.
-
-Use ONLY the grammar rules below.
-DO NOT invent new rules.
-
-GRAMMAR CONTEXT:
-${contextText}
-
-TASK:
-Generate ONE grammar exercise for ${normalizedLevel} learners.
-
-Return STRICT JSON ONLY:
-{
-  "sentence": string,
-  "exercise_type": "correction" | "fill_blank" | "quiz",
-  "correct_answer": string,
-  "grammar_rule": string,
-  "feedback": string,
-  "options": string[],
-  "blank_position"?: number
-}
-`;
-
-      const result = await llm.generateContent(prompt);
-      const responseText = result.response.text();
-
-      try {
-        const cleanText = responseText
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-
-        exercise = JSON.parse(cleanText);
-      } catch (err) {
-        console.error("Gemini JSON parse error:", responseText);
-        return NextResponse.json(
-          { error: "Invalid AI response" },
-          { status: 500 }
-        );
-      }
-
-      if (!exercise.sentence || !exercise.correct_answer) {
-        return NextResponse.json(
-          { error: "Incomplete exercise generated" },
-          { status: 500 }
-        );
-      }
-
-      /* ---------- SAVE GENERATED EXERCISE TO POOL ---------- */
-
-      const { data: savedPool, error: poolInsertErr } = await supabase
-        .from("grammar_pool")
-        .insert([
-          {
-            proficiency_level: normalizedLevel,
-            sentence: exercise.sentence,
-            exercise_type: exercise.exercise_type,
-            correct_answer: exercise.correct_answer,
-            grammar_rule: exercise.grammar_rule,
-            feedback: exercise.feedback,
-            options: exercise.options || [],
-            blank_position: exercise.blank_position || null,
-          },
-        ])
-        .select()
-        .single();
-
-      if (!poolInsertErr && savedPool) {
-        exercise = savedPool;
-      }
     }
 
     /* =====================================================
-       4️⃣ SAVE TO USER EXERCISES
+       3️⃣ TOKEN-OPTIMIZED PROMPT
     ===================================================== */
 
-    const { id: _, ...exerciseData } = exercise;
+    const prompt = `
+You are an English grammar teacher.
 
-    const { data: savedExercise, error: saveErr } = await supabase
+RULE:
+${bestRule.rule}
+
+EXAMPLES:
+${bestRule.examples.split(".").slice(0, 3).join(". ")}
+
+Create ONE new fill-in-the-blank sentence using a similar structure but different wording.
+
+Create ONE fill-in-the-blank sentence.
+Return ONLY valid JSON.
+
+{
+  "sentence": "",
+  "correct_answer": ""
+}
+`;
+
+    const aiResult = await llm.generateContent(prompt);
+    const raw = aiResult.response.text();
+
+    let exercise;
+    try {
+      exercise = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    } catch {
+      return NextResponse.json({ error: "Invalid AI JSON" }, { status: 500 });
+    }
+
+    if (!exercise?.sentence || !exercise?.correct_answer) {
+      return NextResponse.json(
+        { error: "Incomplete exercise" },
+        { status: 500 }
+      );
+    }
+
+    if (usedSentences.has(exercise.sentence)) {
+      return NextResponse.json(
+        { error: "Duplicate exercise generated" },
+        { status: 409 }
+      );
+    }
+
+    /* ---------- Options ---------- */
+
+    const options = shuffle([
+      exercise.correct_answer,
+      ...generateDistractors(exercise.correct_answer),
+    ]);
+
+    /* =====================================================
+       4️⃣ SAVE TO POOL
+    ===================================================== */
+
+    const { data: poolRow } = await supabase
+      .from("grammar_pool")
+      .insert([
+        {
+          proficiency_level: level,
+          sentence: exercise.sentence,
+          exercise_type: "fill_blank",
+          correct_answer: exercise.correct_answer,
+          grammar_rule: bestRule.title,
+          feedback: bestRule.rule,
+          options,
+        },
+      ])
+      .select()
+      .single();
+
+    /* =====================================================
+       5️⃣ SAVE USER EXERCISE
+    ===================================================== */
+
+    const { id: _, ...exerciseData } = poolRow;
+
+    const { data: savedExercise } = await supabase
       .from("grammar_exercises")
       .insert([
         {
           session_id,
           user_id,
-          proficiency_level: normalizedLevel,
+          proficiency_level: level,
           ...exerciseData,
         },
       ])
       .select()
       .single();
 
-    if (saveErr) {
-      return NextResponse.json(
-        { error: "Failed to save exercise" },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json({ exercise: savedExercise });
   } catch (err) {
-    console.error("Grammar RAG route error:", err);
+    console.error("Grammar route error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

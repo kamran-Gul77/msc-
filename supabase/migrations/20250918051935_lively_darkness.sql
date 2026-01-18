@@ -294,3 +294,97 @@ CREATE TABLE public.vocabulary_pool (
 --   NEW.updated_at = now();
 --   RETURN NEW;
 -- END;
+
+-- ////////////////////
+-- create or replace function match_grammar_knowledge(
+--   query_embedding vector(1536),
+--   match_threshold float,
+--   match_count int
+-- )
+-- returns table (
+--   id uuid,
+--   title text,
+--   rule text,
+--   explanation text,
+--   examples text,
+--   similarity float
+-- )
+-- language sql
+-- as $$
+--   select
+--     id,
+--     title,
+--     rule,
+--     explanation,
+--     examples,
+--     1 - (embedding <=> query_embedding) as similarity
+--   from grammar_knowledge
+--   where embedding is not null
+--     and 1 - (embedding <=> query_embedding) > match_threshold
+--   order by embedding <=> query_embedding
+--   limit match_count;
+-- $$;
+-- ///////////////////////////////CREATE OR REPLACE FUNCTION match_vocabulary_knowledge(
+--   query_embedding vector(1536),
+--   match_threshold float,
+--   match_count int
+-- )
+-- RETURNS TABLE (
+--   id uuid,
+--   word text,
+--   definition text,
+--   synonyms text[],
+--   antonyms text[],
+--   examples text,
+--   similarity float
+-- )
+-- LANGUAGE sql
+-- AS $$
+--   SELECT *
+--   FROM (
+--     SELECT
+--       id,
+--       word,
+--       definition,
+--       synonyms,
+--       antonyms,
+--       examples,
+--       1 - (embedding <=> query_embedding) AS similarity
+--     FROM vocabulary_knowledge
+--     WHERE embedding IS NOT NULL
+--       AND 1 - (embedding <=> query_embedding) > match_threshold
+--     ORDER BY similarity DESC
+--     LIMIT 20
+--   ) AS top_matches
+--   ORDER BY random()
+--   LIMIT match_count;
+-- $$;
+-- //////////////////////////
+-- CREATE OR REPLACE FUNCTION match_vocabulary_pool(
+--   query_embedding vector(1536),
+--   match_threshold float,
+--   match_count int
+-- )
+-- RETURNS TABLE (
+--   id uuid,
+--   word text,
+--   exercise_type text,
+--   correct_answer text,
+--   example_sentence text,
+--   similarity float
+-- )
+-- LANGUAGE sql
+-- AS $$
+--   SELECT
+--     id,
+--     word,
+--     exercise_type,
+--     correct_answer,
+--     example_sentence,
+--     1 - (embedding <=> query_embedding) AS similarity
+--   FROM vocabulary_pool
+--   WHERE embedding IS NOT NULL
+--     AND 1 - (embedding <=> query_embedding) > match_threshold
+--   ORDER BY embedding <=> query_embedding
+--   LIMIT match_count;
+-- $$;

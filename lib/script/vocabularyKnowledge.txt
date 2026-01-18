@@ -1,0 +1,29 @@
+-- ================= BEGINNER VOCABULARY =================
+INSERT INTO vocabulary_knowledge
+(word, definition, synonyms, antonyms, examples, proficiency_level)
+VALUES
+('happy', 'Feeling or showing pleasure or contentment.', '{"joyful","cheerful"}', '{"sad","unhappy"}', 'She felt happy after receiving the gift. He was happy to see his friend.', 'beginner'),
+('big', 'Of considerable size, extent, or intensity.', '{"large","huge"}', '{"small","tiny"}', 'They live in a big house. He bought a big car.', 'beginner'),
+('eat', 'To put food into the mouth, chew, and swallow it.', '{"consume","devour"}', '{"fast","starve"}', 'I like to eat apples. We eat breakfast at 8 AM.', 'beginner'),
+('run', 'To move at a speed faster than a walk.', '{"sprint","jog"}', '{"walk","stop"}', 'He runs every morning. They ran to catch the bus.', 'beginner'),
+('cold', 'Having a low temperature; uncomfortably cool.', '{"chilly","freezing"}', '{"hot","warm"}', 'It is very cold today. She feels cold in the room.', 'beginner');
+
+-- ================= INTERMEDIATE VOCABULARY =================
+INSERT INTO vocabulary_knowledge
+(word, definition, synonyms, antonyms, examples, proficiency_level)
+VALUES
+('challenge', 'A task or situation that tests someone’s abilities.', '{"difficulty","test"}', '{"ease","simplicity"}', 'Climbing the mountain was a real challenge. She accepted the challenge eagerly.', 'intermediate'),
+('improve', 'To make or become better.', '{"enhance","upgrade"}', '{"worsen","decline"}', 'He wants to improve his English. The company improved its services.', 'intermediate'),
+('accurate', 'Correct, precise, and free from errors.', '{"exact","correct"}', '{"wrong","inaccurate"}', 'The data is accurate. She gave an accurate description.', 'intermediate'),
+('decide', 'To make a choice or come to a conclusion.', '{"choose","determine"}', '{"hesitate","waver"}', 'I cannot decide what to wear. He decided to take the job.', 'intermediate'),
+('consider', 'To think carefully about something, typically before making a decision.', '{"contemplate","reflect"}', '{"ignore","disregard"}', 'Please consider my proposal. She considered the options carefully.', 'intermediate');
+
+-- ================= ADVANCED VOCABULARY =================
+INSERT INTO vocabulary_knowledge
+(word, definition, synonyms, antonyms, examples, proficiency_level)
+VALUES
+('meticulous', 'Showing great attention to detail; very careful and precise.', '{"careful","thorough"}', '{"careless","sloppy"}', 'She is meticulous in her work. He kept meticulous records.', 'advanced'),
+('contemplate', 'To think profoundly and at length.', '{"consider","ponder"}', '{"ignore","disregard"}', 'He contemplated his future. She contemplated the painting silently.', 'advanced'),
+('innovate', 'To make changes in something established, especially by introducing new methods.', '{"invent","modernize"}', '{"copy","replicate"}', 'The company continues to innovate in technology. They innovated a new design.', 'advanced'),
+('ambiguous', 'Open to more than one interpretation; not having one obvious meaning.', '{"unclear","vague"}', '{"clear","obvious"}', 'The instructions were ambiguous. His statement is ambiguous.', 'advanced'),
+('resilient', 'Able to withstand or recover quickly from difficult conditions.', '{"strong","tough"}', '{"fragile","weak"}', 'She is resilient in the face of adversity. The community is resilient after the storm.', 'advanced');
