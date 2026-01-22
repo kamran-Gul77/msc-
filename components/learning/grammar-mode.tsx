@@ -148,7 +148,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
             date: new Date().toISOString().split("T")[0],
             grammar_accuracy: accuracy,
           },
-          { onConflict: "user_id,date" } // ensures only one record per day
+          { onConflict: "user_id,date" }, // ensures only one record per day
         );
 
       if (upsertError) throw upsertError;
@@ -259,7 +259,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
               correct_answer: correctAnswer,
               feedback,
             }
-          : prev
+          : prev,
       );
 
       // ✅ Fire off DB update + stats refresh in parallel
@@ -409,9 +409,9 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                 ? option === currentExercise.correct_answer
                   ? "bg-green-900 border-green-400 text-green-300"
                   : userAnswer === option &&
-                    option !== currentExercise.correct_answer
-                  ? "bg-red-900 border-red-400 text-red-300"
-                  : "opacity-60 bg-[#181818] border-[#303030] text-gray-400"
+                      option !== currentExercise.correct_answer
+                    ? "bg-red-900 border-red-400 text-red-300"
+                    : "opacity-60 bg-[#181818] border-[#303030] text-gray-400"
                 : "bg-[#212121] border-[#303030] hover:bg-[#181818] text-gray-200 hover:text-white"
             }`}
                     onClick={() => !showResult && setUserAnswer(option)}

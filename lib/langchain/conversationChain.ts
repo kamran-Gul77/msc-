@@ -12,20 +12,21 @@ function getSessionMemory(sessionId: string): BufferWindowMemory {
         k: 10, // keep only last 5 messages
         returnMessages: true,
         memoryKey: "history",
-      })
+      }),
     );
   }
   return memoryStore.get(sessionId)!;
 }
 const GEMINI_API_KEYS = [
-  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
-  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
+  "AIzaSyAGSmjeGoeM_y-btPVmsOc1wny_7DpvONc",
   "AIzaSyC16SbaH7u7Jg18cPcsjiJOcMPNSwaA8KE",
+  "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
+  "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
 ];
 async function withGeminiRetry<TClient, T>(
   keys: string[],
   createClient: (key: string) => TClient,
-  fn: (client: TClient) => Promise<T>
+  fn: (client: TClient) => Promise<T>,
 ): Promise<T> {
   let lastError: any;
 
@@ -40,7 +41,7 @@ async function withGeminiRetry<TClient, T>(
   }
 
   throw new Error(
-    `All Gemini API keys failed. Last error: ${lastError?.message || lastError}`
+    `All Gemini API keys failed. Last error: ${lastError?.message || lastError}`,
   );
 }
 
@@ -136,7 +137,7 @@ Level: ${proficiencyLevel}
       const parsed = safeJsonParse(rawText);
       if (!parsed) throw new Error("Gemini returned invalid JSON");
       return parsed;
-    }
+    },
   );
 
   // Save context
