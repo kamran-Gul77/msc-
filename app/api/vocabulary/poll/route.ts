@@ -27,7 +27,7 @@ const GEMINI_API_KEYS = [
   // "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
 ];
 
-export async function withGeminiRetry<T>(
+async function withGeminiRetry<T>(
   fn: (client: GoogleGenerativeAI) => Promise<T>,
 ): Promise<T> {
   let lastError: any;
