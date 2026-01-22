@@ -1,17 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { withGeminiRetry } from "@/lib/ai/gemeniFreeKeys";
 
 export const dynamic = "force-dynamic"; // forces server-side rendering
 
 /** ================= Supabase Client ================= */
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
-
-/** ================= Gemini API Retry Helper ================= */
 
 /** ================= Types ================= */
 interface VocabularyRequest {
@@ -20,6 +17,34 @@ interface VocabularyRequest {
   exerciseId?: string;
   userAnswer?: string;
   user_id: string;
+}
+
+const GEMINI_API_KEYS = [
+  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
+  // "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
+  // "AIzaSyBUB4Ey-rOC-LT44u-Y06-uHsKO-XUEXv0",
+  "AIzaSyC16SbaH7u7Jg18cPcsjiJOcMPNSwaA8KE",
+  // "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
+];
+
+export async function withGeminiRetry<T>(
+  fn: (client: GoogleGenerativeAI) => Promise<T>,
+): Promise<T> {
+  let lastError: any;
+
+  for (const key of GEMINI_API_KEYS) {
+    const client = new GoogleGenerativeAI(key);
+    try {
+      return await fn(client);
+    } catch (err) {
+      console.warn(`Gemini API key failed: ${key}`, err);
+      lastError = err;
+    }
+  }
+
+  throw new Error(
+    `All Gemini API keys failed. Last error: ${lastError?.message || lastError}`,
+  );
 }
 
 /** ================= AI Question Generator ================= */
@@ -76,7 +101,7 @@ export async function POST(req: NextRequest) {
     if (!session_id)
       return NextResponse.json(
         { error: "Session ID required" },
-        { status: 400 }
+        { status: 400 },
       );
 
     /** ================= 1. Answering an existing question ================= */
@@ -84,7 +109,7 @@ export async function POST(req: NextRequest) {
       if (!userAnswer)
         return NextResponse.json(
           { error: "User answer required" },
-          { status: 400 }
+          { status: 400 },
         );
 
       const { data: exercise, error } = await supabase
@@ -96,7 +121,7 @@ export async function POST(req: NextRequest) {
       if (error || !exercise)
         return NextResponse.json(
           { error: "Exercise not found" },
-          { status: 404 }
+          { status: 404 },
         );
 
       const isCorrect =
@@ -118,7 +143,7 @@ export async function POST(req: NextRequest) {
     if (!proficiency_level)
       return NextResponse.json(
         { error: "Proficiency level required" },
-        { status: 400 }
+        { status: 400 },
       );
 
     // Already attempted exercises
@@ -129,17 +154,24 @@ export async function POST(req: NextRequest) {
 
     const attemptedIds = attempted?.map((a) => a.pool_id).filter(Boolean) || [];
 
-    // Try pulling from pool
-    let { data: poolQuestion } = await supabase
+    // Try pulling from pool first
+    let poolQuery = supabase
       .from("vocabulary_pool")
       .select("*")
       .eq("proficiency_level", proficiency_level)
-      .not("id", "in", `(${attemptedIds.join(",") || "null"})`)
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    if (attemptedIds.length > 0) {
+      poolQuery = poolQuery.not("id", "in", `(${attemptedIds.join(",")})`);
+    }
+
+    const { data: poolQuestion } = await poolQuery.maybeSingle();
+
+    let finalQuestion = poolQuestion;
 
     // 🔹 If no pool question → AI fallback
-    if (!poolQuestion) {
+    if (!finalQuestion) {
+      console.log("No pool question available → calling Gemini AI");
       const aiExercise = await generateUniqueAIQuestion(proficiency_level);
 
       const { data: inserted, error: insertError } = await supabase
@@ -162,10 +194,10 @@ export async function POST(req: NextRequest) {
         throw new Error("Could not insert AI-generated question");
       }
 
-      poolQuestion = inserted;
+      finalQuestion = inserted;
     }
 
-    if (!poolQuestion?.id) {
+    if (!finalQuestion?.id) {
       throw new Error("No valid vocabulary question available");
     }
 
@@ -176,13 +208,13 @@ export async function POST(req: NextRequest) {
         {
           session_id,
           user_id,
-          pool_id: poolQuestion.id,
-          word: poolQuestion.word,
-          exercise_type: poolQuestion.exercise_type,
-          correct_answer: poolQuestion.correct_answer,
-          options: poolQuestion.options,
-          example_sentence: poolQuestion.example_sentence,
-          proficiency_level: poolQuestion.proficiency_level,
+          pool_id: finalQuestion.id,
+          word: finalQuestion.word,
+          exercise_type: finalQuestion.exercise_type,
+          correct_answer: finalQuestion.correct_answer,
+          options: finalQuestion.options,
+          example_sentence: finalQuestion.example_sentence,
+          proficiency_level: finalQuestion.proficiency_level,
         },
       ])
       .select()
@@ -195,7 +227,7 @@ export async function POST(req: NextRequest) {
     console.error("POST handler error:", err);
     return NextResponse.json(
       { error: "Internal Server Error", details: (err as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

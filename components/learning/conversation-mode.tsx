@@ -177,8 +177,8 @@ const FeedbackDisplay = ({ message }: { message: Message }) => {
         score >= 4
           ? "bg-green-600"
           : score >= 2.5
-          ? "bg-yellow-600"
-          : "bg-red-600";
+            ? "bg-yellow-600"
+            : "bg-red-600";
       return (
         <div className="flex items-center space-x-2 mt-1 justify-end">
           <Badge className={`text-xs ${scoreClass} text-white font-bold`}>
@@ -339,7 +339,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
 
       return () => {
         const timeSpentInCurrentView = Math.round(
-          (new Date().getTime() - sessionStarted.getTime()) / 1000
+          (new Date().getTime() - sessionStarted.getTime()) / 1000,
         );
         // Only persist duration if the session is not marked complete
         if (!isSessionComplete) {
@@ -644,7 +644,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
       if (!response.ok) {
         throw new Error(`AI request failed: ${response.status}`);
       }
-
+      setIsLoading(false);
       const data = await response.json();
 
       const aiResponse = data.ai_reply ?? "⚠️ No reply from AI.";
@@ -698,7 +698,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         await updateConversationQuality(
           user.id,
           qualityPercent,
-          cumulativeDuration
+          cumulativeDuration,
         );
       }
 
@@ -738,14 +738,14 @@ export function ConversationMode({ profile }: ConversationModeProps) {
   // --- Scenario Creation Logic ---
 
   const handleCustomFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setCustomScenarioForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCustomScenarioSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
+    e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
     if (!user) return;
@@ -902,7 +902,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                     <Select
                       value={customScenarioForm.difficulty}
                       onValueChange={(
-                        value: "beginner" | "intermediate" | "advanced"
+                        value: "beginner" | "intermediate" | "advanced",
                       ) =>
                         setCustomScenarioForm((prev) => ({
                           ...prev,
@@ -990,8 +990,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
                       scenario.difficulty === "beginner"
                         ? "bg-green-600"
                         : scenario.difficulty === "intermediate"
-                        ? "bg-yellow-600"
-                        : "bg-red-600"
+                          ? "bg-yellow-600"
+                          : "bg-red-600"
                     }`}
                   >
                     {scenario.difficulty}
@@ -1116,8 +1116,8 @@ export function ConversationMode({ profile }: ConversationModeProps) {
               isSessionComplete
                 ? "Session complete. Click 'Back to Scenarios' to start a new one."
                 : isLoading
-                ? "Waiting for AI response..."
-                : "Type your response here..."
+                  ? "Waiting for AI response..."
+                  : "Type your response here..."
             }
             className="flex-1 h-[20px] bg-[#212121] border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 rounded-xl"
             rows={2}
