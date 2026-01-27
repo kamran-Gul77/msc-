@@ -41,7 +41,7 @@ import { updateConversationQuality } from "@/lib/supabase/apiCalls";
 import { useToast } from "@/hooks/use-toast";
 
 // --- Constants ---
-const MESSAGE_LIMIT = 20;
+const MESSAGE_LIMIT = 10;
 
 // --- Interface Definitions ---
 
