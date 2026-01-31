@@ -1,15 +1,15 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import MemoryClient from "mem0ai";
 
-/* ================= MEM0 CLIENT ================= */
-const mem0 = new MemoryClient({
-  apiKey: process.env.MEM0_API_KEY!,
-});
+/* ================= MEM0 CONFIG ================= */
+const MEM0_BASE_URL = "https://api.mem0.ai";
+const MEM0_HEADERS = {
+  Authorization: `Token ${process.env.MEM0_API_KEY}`,
+  "Content-Type": "application/json",
+};
 
 /* ================= GEMINI KEYS ================= */
 const GEMINI_API_KEYS = [
-  // "AIzaSyC16SbaH7u7Jg18cPcsjiJOcMPNSwaA8KE",
   "AIzaSyAGSmjeGoeM_y-btPVmsOc1wny_7DpvONc",
   "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
   "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
@@ -28,15 +28,16 @@ async function withGeminiRetry<T>(
   fn: (apiKey: string) => Promise<T>,
 ): Promise<T> {
   let lastError: any;
+
   for (const key of GEMINI_API_KEYS) {
     try {
       return await fn(key);
     } catch (err: any) {
       lastError = err;
-      // Retry only on quota/rate limit
       if (!err.message?.toLowerCase().includes("quota")) break;
     }
   }
+
   throw lastError;
 }
 
@@ -44,8 +45,86 @@ async function withGeminiRetry<T>(
 function safeJsonParse(text: string): ConversationAIResponse {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("Invalid JSON from Gemini");
+  if (start === -1 || end === -1) {
+    throw new Error("Invalid JSON from Gemini");
+  }
   return JSON.parse(text.slice(start, end + 1));
+}
+
+/* ================= MEM0 SEARCH ================= */
+async function searchMemories(sessionId: string, query: string) {
+  console.log(
+    `[Mem0] Searching memories for session: ${sessionId}, query: "${query}"`,
+  );
+
+  try {
+    const res = await fetch(`${MEM0_BASE_URL}/v2/memories/search/`, {
+      method: "POST",
+      headers: MEM0_HEADERS,
+      body: JSON.stringify({
+        query,
+        filters: { user_id: sessionId },
+        top_k: 5, // optional: limit number of results
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn(`[Mem0] Search failed: ${res.status} ${res.statusText}`);
+      return [];
+    }
+
+    const data = await res.json();
+    console.log("[Mem0] Search results:", data ?? []);
+    return data ?? [];
+  } catch (err: any) {
+    console.error("[Mem0] Search error:", err.message);
+    return [];
+  }
+}
+
+async function addMemory(
+  sessionId: string,
+  userMessage: string,
+  assistantReply: string,
+) {
+  console.log(`[Mem0] Adding memory for session: ${sessionId}`);
+  console.log("Content:", { userMessage, assistantReply });
+
+  try {
+    const res = await fetch(`https://api.mem0.ai/v1/memories/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${process.env.MEM0_API_KEY}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        user_id: sessionId,
+        messages: [
+          { role: "user", content: userMessage },
+          { role: "assistant", content: assistantReply },
+        ],
+        metadata: { category: "english-learning" },
+        async_mode: true,
+        infer: true,
+        output_format: "v1.1",
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn(
+        `[Mem0] Add memory failed: ${res.status} ${res.statusText}`,
+        errText,
+      );
+      return;
+    }
+
+    const data = await res.json();
+    console.log("[Mem0] Memory added successfully:", data);
+  } catch (err: any) {
+    console.error("[Mem0] Add memory error:", err.message);
+  }
 }
 
 /* ================= MAIN FUNCTION ================= */
@@ -64,27 +143,20 @@ export async function runConversationChain({
   proficiencyLevel: string;
   topic?: string;
 }): Promise<ConversationAIResponse> {
-  /* --------- 1️⃣ Search Mem0 for relevant memory --------- */
+  /* --------- 1️⃣ Search memory --------- */
   let memories: any[] = [];
 
   try {
-    memories = await mem0.search(message, {
-      filters: { user_id: sessionId },
-      user_id: sessionId,
-
-      semantic: true, // 🔑 important for English learning context
-      limit: 5, // 🔥 small = fast + cheap
-    });
+    memories = await searchMemories(sessionId, message);
   } catch (err: any) {
     console.warn("Mem0 search failed:", err.message);
   }
 
-  const memoryContext =
-    memories.length > 0
-      ? memories.map((m: any) => `- ${m.memory}`).join("\n")
-      : "";
+  const memoryContext = memories.length
+    ? memories.map((m: any) => `- ${m.memory}`).join("\n")
+    : "None";
 
-  /* --------- 2️⃣ Build system prompt --------- */
+  /* --------- 2️⃣ System prompt --------- */
   const systemPrompt = `
 You are an expert English conversation tutor.
 
@@ -106,10 +178,10 @@ Scenario: ${topic || scenario}
 Context: ${context}
 
 Relevant Memory:
-${memoryContext || "None"}
+${memoryContext}
 `;
 
-  /* --------- 3️⃣ Gemini API call --------- */
+  /* --------- 3️⃣ Gemini call --------- */
   const result = await withGeminiRetry(async (apiKey) => {
     const llm = new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
@@ -124,18 +196,9 @@ ${memoryContext || "None"}
     return safeJsonParse(res.generations[0][0].text);
   });
 
-  /* --------- 4️⃣ Save important memory --------- */
+  /* --------- 4️⃣ Save memory --------- */
   try {
-    await mem0.add(
-      [
-        { role: "user", content: message },
-        { role: "assistant", content: result.ai_reply },
-      ],
-      {
-        user_id: sessionId,
-        categories: ["conversation", "english-learning"],
-      },
-    );
+    await addMemory(sessionId, message, result.ai_reply);
   } catch (err: any) {
     console.warn("Mem0 add failed:", err.message);
   }

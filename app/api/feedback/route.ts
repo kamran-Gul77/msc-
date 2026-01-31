@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // use service role for insert
+  process.env.SUPABASE_SERVICE_ROLE_KEY!, // use service role for insert
 );
 
 export async function POST(req: Request) {
@@ -40,12 +40,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { success: true, feedback: data[0] },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
