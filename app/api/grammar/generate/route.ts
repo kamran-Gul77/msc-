@@ -12,10 +12,10 @@ const supabase = createClient(
 /* ================= LLM & Embedding Models ================= */
 const embeddingModel = new GoogleGenerativeAI(
   process.env.GEMINI_API_KEY!,
-).getGenerativeModel({ model: "text-embedding-004" });
+).getGenerativeModel({ model: "gemini-embedding-001" });
 
 /* ================= CONSTANTS ================= */
-const MIN_SIMILARITY = 0.32;
+const MIN_SIMILARITY = 0.15;
 const RAG_LIMIT = 3;
 
 /* ================= HELPERS ================= */
@@ -147,6 +147,7 @@ export async function POST(req: Request) {
       "english grammar exercise",
     );
     const queryEmbedding = embeddingResult.embedding.values;
+    console.log("Query embedding length:", queryEmbedding.length);
 
     const { data: chunks, error } = await supabase.rpc(
       "match_grammar_knowledge",
