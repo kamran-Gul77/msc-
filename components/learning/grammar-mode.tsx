@@ -121,7 +121,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
       console.error("Error starting session:", error);
     }
   };
-  // ✅ Update or insert grammar accuracy for this user
+  //  Update or insert grammar accuracy for this user
   const updateGrammarAccuracy = async (userId: string) => {
     try {
       // 1️⃣ Fetch all grammar exercises of this user
@@ -153,7 +153,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
 
       if (upsertError) throw upsertError;
 
-      console.log("✅ Grammar accuracy updated:", accuracy.toFixed(2) + "%");
+      console.log(" Grammar accuracy updated:", accuracy.toFixed(2) + "%");
 
       // 4️⃣ Optionally show in UI
       setStats((prev) => ({
@@ -247,7 +247,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
 
       const { correct, correctAnswer, feedback } = await res.json();
 
-      // ✅ Optimistic UI update
+      //  Optimistic UI update
       setIsCorrect(correct);
       setShowResult(true);
       setCurrentExercise((prev) =>
@@ -262,7 +262,7 @@ export function GrammarMode({ profile }: GrammarModeProps) {
           : prev,
       );
 
-      // ✅ Fire off DB update + stats refresh in parallel
+      //  Fire off DB update + stats refresh in parallel
       await Promise.all([
         supabase
           .from("grammar_exercises")

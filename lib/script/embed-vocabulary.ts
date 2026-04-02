@@ -22,12 +22,12 @@ async function run() {
     .is("embedding", null);
 
   if (error) {
-    console.error("❌ Supabase fetch error:", error);
+    console.error(" Supabase fetch error:", error);
     return;
   }
 
   if (!rows || rows.length === 0) {
-    console.log("✅ All vocabulary rows already embedded.");
+    console.log(" All vocabulary rows already embedded.");
     return;
   }
 
@@ -53,12 +53,12 @@ Examples: ${row.examples || ""}
         .eq("id", row.id);
 
       if (updateError) {
-        console.error(`❌ Update failed for ${row.word}`, updateError);
+        console.error(` Update failed for ${row.word}`, updateError);
       } else {
-        console.log(`✅ Embedded: ${row.word}`);
+        console.log(` Embedded: ${row.word}`);
       }
     } catch (err) {
-      console.error(`❌ Embedding failed for ${row.word}`, err);
+      console.error(` Embedding failed for ${row.word}`, err);
     }
   }
 

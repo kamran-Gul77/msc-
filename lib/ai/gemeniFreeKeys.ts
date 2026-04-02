@@ -1,11 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_API_KEYS = [
-  "AIzaSyAGSmjeGoeM_y-btPVmsOc1wny_7DpvONc",
-  "AIzaSyBUB4Ey-rOC-LT44u-Y06-uHsKO-XUEXv0",
-  // "AIzaSyC16SbaH7u7Jg18cPcsjiJOcMPNSwaA8KE",
-  // "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
-];
+const GEMINI_API_KEYS = process.env.GEMINI_API_KEYS!.split(",");
 
 export async function withGeminiRetry<T>(
   fn: (client: GoogleGenerativeAI) => Promise<T>,
@@ -13,7 +8,9 @@ export async function withGeminiRetry<T>(
   let lastError: any;
 
   for (const key of GEMINI_API_KEYS) {
-    const client = new GoogleGenerativeAI(key);
+    const client = new GoogleGenerativeAI(key.trim());
+    console.log("api key of gemeni", key);
+
     try {
       return await fn(client);
     } catch (err) {

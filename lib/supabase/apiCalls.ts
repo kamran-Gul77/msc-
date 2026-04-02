@@ -5,10 +5,10 @@ const supabase = createClient();
 async function updateConversationQuality(
   userId: string,
   avgQuality: number,
-  duration: number
+  duration: number,
 ) {
   try {
-    // ✅ Ensure it stays between 0 and 100
+    //  Ensure it stays between 0 and 100
     const normalizedQuality = Math.min(Math.max(avgQuality, 0), 100);
 
     await supabase.from("learning_analytics").upsert(
@@ -18,7 +18,7 @@ async function updateConversationQuality(
         conversation_quality: normalizedQuality.toFixed(2),
         total_time_spent: duration, // update duration as well
       },
-      { onConflict: "user_id,date" }
+      { onConflict: "user_id,date" },
     );
   } catch (err) {
     console.error("Failed to update conversation quality:", err);

@@ -718,7 +718,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         ...prev,
         {
           id: `err-${Date.now()}`,
-          content: "❌ AI connection failed. Please try again.",
+          content: " AI connection failed. Please try again.",
           isUser: false,
           timestamp: new Date(),
         },
@@ -801,7 +801,7 @@ export function ConversationMode({ profile }: ConversationModeProps) {
         ...prev,
         {
           id: `system-creation-error-${Date.now()}`,
-          content: "❌ Failed to save custom scenario. Please try again.",
+          content: " Failed to save custom scenario. Please try again.",
           isUser: false,
           timestamp: new Date(),
           corrected: "DB Error",

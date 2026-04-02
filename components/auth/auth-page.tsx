@@ -41,21 +41,21 @@ export function AuthPage() {
           "Invalid credentials or login failed.";
 
         toast({
-          title: "Login Failed ❌",
+          title: "Login Failed ",
           description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
-      // ✅ Success case
+      //  Success case
       toast({
-        title: "Login Successful ✅",
+        title: "Login Successful ",
         description: "Welcome back! Redirecting to your dashboard...",
         variant: "default",
       });
 
-      console.log("Login successful ✅", result);
+      console.log("Login successful ", result);
     } catch (error: any) {
       console.error("Sign in error (thrown):", error);
 
@@ -66,7 +66,7 @@ export function AuthPage() {
         "Something went wrong. Please try again.";
 
       toast({
-        title: "Login Failed ❌",
+        title: "Login Failed ",
         description: errorMessage,
         variant: "destructive",
       });
@@ -92,14 +92,14 @@ export function AuthPage() {
           "Failed to create account.";
 
         toast({
-          title: "Sign Up Failed ❌",
+          title: "Sign Up Failed ",
           description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
-      // ✅ Success case
+      //  Success case
       toast({
         title: "Account Created Successfully 🎉",
         description: "Learn English with LinguaAi.",
@@ -115,7 +115,7 @@ export function AuthPage() {
       console.error("Sign up error (thrown):", error);
 
       toast({
-        title: "Sign Up Failed ❌",
+        title: "Sign Up Failed ",
         description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });

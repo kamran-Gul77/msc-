@@ -68,7 +68,7 @@ export default function FeedbackPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert("✅ Thank you for your feedback!");
+        alert(" Thank you for your feedback!");
         setFormData({
           name: "",
           email: "",
@@ -80,11 +80,11 @@ export default function FeedbackPage() {
         setRating(0);
         fetchFeedbacks(); // refresh carousel
       } else {
-        alert("❌ Failed to submit feedback: " + data.error);
+        alert(" Failed to submit feedback: " + data.error);
       }
     } catch (err) {
       console.error(err);
-      alert("❌ Something went wrong!");
+      alert(" Something went wrong!");
     } finally {
       setLoading(false);
     }

@@ -9,11 +9,8 @@ const MEM0_HEADERS = {
 };
 
 /* ================= GEMINI KEYS ================= */
-const GEMINI_API_KEYS = [
-  "AIzaSyAGSmjeGoeM_y-btPVmsOc1wny_7DpvONc",
-  "AIzaSyDwFFOfSN8Yd3ch1VYMxesiDf_7SUVB6y4",
-  "AIzaSyDgvDxyDTe9WjINcTW05b75If9fIp1zRMQ",
-];
+const apiKey = process.env.GEMINI_API_KEY1!;
+const GEMINI_API_KEYS = [apiKey];
 
 /* ================= TYPES ================= */
 export interface ConversationAIResponse {

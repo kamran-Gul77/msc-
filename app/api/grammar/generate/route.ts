@@ -9,10 +9,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-/* ================= LLM & Embedding Models ================= */
-const embeddingModel = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY!,
-).getGenerativeModel({ model: "gemini-embedding-001" });
+/* ================= LLM & Embedding Models =============
 
 /* ================= CONSTANTS ================= */
 const MIN_SIMILARITY = 0.15;
@@ -115,7 +112,7 @@ export async function POST(req: Request) {
     const { data: poolQuestion } = await poolQuery.maybeSingle();
 
     if (poolQuestion) {
-      // ✅ Pool exercise found
+      //  Pool exercise found
       const options = shuffle([
         poolQuestion.correct_answer,
         ...generateDistractors(poolQuestion.correct_answer),
@@ -143,11 +140,17 @@ export async function POST(req: Request) {
 
     /* ================= 2️⃣c: If pool empty → VECTOR RAG + Gemini ================= */
     // Embed neutral grammar intent
-    const embeddingResult = await embeddingModel.embedContent(
-      "english grammar exercise",
-    );
-    const queryEmbedding = embeddingResult.embedding.values;
-    console.log("Query embedding length:", queryEmbedding.length);
+    const queryEmbedding = await withGeminiRetry(async (genAI) => {
+      const embeddingModel = genAI.getGenerativeModel({
+        model: "gemini-embedding-001",
+      });
+
+      const embeddingResult = await embeddingModel.embedContent(
+        "english grammar exercise",
+      );
+
+      return embeddingResult.embedding.values;
+    });
 
     const { data: chunks, error } = await supabase.rpc(
       "match_grammar_knowledge",

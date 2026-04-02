@@ -212,9 +212,9 @@ export function Dashboard() {
       if (error) {
         console.error("Error updating user progress:", error);
       } else {
-        console.log("✅ User profile updated:", { points, level });
+        console.log(" User profile updated:", { points, level });
         setProfile((prev) =>
-          prev ? { ...prev, total_points: points, current_level: level } : prev
+          prev ? { ...prev, total_points: points, current_level: level } : prev,
         );
       }
     } catch (err) {
@@ -232,21 +232,21 @@ export function Dashboard() {
   }, [user?.id, activeTab]);
 
   const completedConversations = sessions.filter(
-    (s) => s.mode === "conversation" && s.is_completed === true
+    (s) => s.mode === "conversation" && s.is_completed === true,
   ).length;
   console.log(completedConversations, "completedConversations");
 
   // Each completed conversation = 100 points
   const conversationPoints = completedConversations * 100;
 
-  // ✅ Total Points from all modes
+  //  Total Points from all modes
   const totalPoints =
     (vocabStats?.total_points || 0) +
     (grammarStats?.total_points || 0) +
     (readingStats?.total_points || 0) +
     conversationPoints;
 
-  // ✅ Streak (1 per 100 points)
+  //  Streak (1 per 100 points)
   const streak = Math.floor(totalPoints / 100);
 
   useEffect(() => {
@@ -433,7 +433,7 @@ export function Dashboard() {
                       <span>Accuracy</span>
                       <span>
                         {Math.round(
-                          Number(stats?.[0]?.vocabulary_accuracy ?? 0)
+                          Number(stats?.[0]?.vocabulary_accuracy ?? 0),
                         )}
                         %
                       </span>
@@ -483,7 +483,7 @@ export function Dashboard() {
                       <span>Quality Score</span>
                       <span>
                         {Math.round(
-                          Number(stats?.[0]?.conversation_quality ?? 0)
+                          Number(stats?.[0]?.conversation_quality ?? 0),
                         )}
                         %
                       </span>
