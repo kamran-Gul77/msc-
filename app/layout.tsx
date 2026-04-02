@@ -4,13 +4,15 @@ import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Toast } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "LinguaAI - AI-Powered English Learning",
   description:
     "Master English with AI-powered vocabulary, grammar, and conversation practice",
+  icons: {
+    icon: "@/app/icon.png", // put file in /public
+  },
 };
 
 export default function RootLayout({

@@ -8,6 +8,8 @@ import { useAuth } from "@/components/providers";
 // Assuming this import defines the structure of your user profile
 import { UserProfile } from "../dashboard/dashboard";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import logo from "@/app/icon.png";
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -114,9 +116,10 @@ export function Navigation() {
   return (
     <nav className="bg-[#121212]/95 backdrop-blur supports-[backdrop-filter]:bg-[#121212]/60 sticky top-0 z-50 w-full border-b border-[#303030]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-24">
           <Link href="/" className="flex items-center space-x-2">
-            <Brain className="h-8 w-8 text-[#fff]" />
+            {/* <Brain className="h-8 w-8 text-[#fff]" /> */}
+            <Image alt="" src={logo} height={80} width={80}></Image>
             <span className="text-xl font-bold text-white">LinguaAi</span>
           </Link>
 
@@ -129,7 +132,7 @@ export function Navigation() {
           {/* Mobile menu button */}
           <div className="md:hidden">
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
@@ -145,8 +148,8 @@ export function Navigation() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#1c1c1c] rounded-lg mt-2">
-              {NavLinks}
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#1c1c1c]  rounded-lg mt-2">
+              <div className="flex gap-3">{NavLinks}</div>
               {/* Mobile Auth/Profile Link */}
               <div className="px-3 py-2">
                 {user ? (

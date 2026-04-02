@@ -55,7 +55,7 @@ export default function HomePage() {
               with our intelligent chatbot. Personalized lessons that adapt to
               your learning pace and style.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex  gap-4 justify-center">
               <Link
                 href={"/login"}
                 className="text-lg px-8 flex gap-2 item-center align-center py-2 rounded-md  bg-yellow-500 hover:bg-yellow-600 text-black"
@@ -63,13 +63,6 @@ export default function HomePage() {
                 <MessageCircle className="mr-2 h-5 w-5 mt-1 text-black" />
                 Start Learning Now
               </Link>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-lg px-8 hover:text-white py-6 bg-transparent border border-gray-600 text-white hover:bg-gray-800"
-              >
-                Watch Demo
-              </Button>
             </div>
           </div>
         </div>
@@ -201,19 +194,19 @@ export default function HomePage() {
                   {step === 1
                     ? "Sign Up"
                     : step === 2
-                    ? "Choose Focus"
-                    : step === 3
-                    ? "Practice"
-                    : "Improve"}
+                      ? "Choose Focus"
+                      : step === 3
+                        ? "Practice"
+                        : "Improve"}
                 </h3>
                 <p className="text-gray-400 text-sm">
                   {step === 1
                     ? "Create your account and set your learning goals"
                     : step === 2
-                    ? "Select vocabulary, grammar, or conversation practice"
-                    : step === 3
-                    ? "Engage with AI exercises and conversations"
-                    : "Track progress and achieve your English goals"}
+                      ? "Select vocabulary, grammar, or conversation practice"
+                      : step === 3
+                        ? "Engage with AI exercises and conversations"
+                        : "Track progress and achieve your English goals"}
                 </p>
               </div>
             ))}
