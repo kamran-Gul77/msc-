@@ -2,7 +2,7 @@ import "dotenv/config";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1!);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
