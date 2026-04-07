@@ -104,6 +104,10 @@ http://localhost:3000
 
 ---
 
+## raw data
+
+The data file includes a list of tested raw data and screenshots.
+
 ## live link
 
 https://www.linguaai.online
