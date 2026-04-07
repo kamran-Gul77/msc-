@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_API_KEYS = process.env.GEMINI_API_KEYS!.split(",");
-
+const apiKey1 = process.env.GEMINI_API_KEY1!;
+const apiKey2 = process.env.GEMINI_API_KEY2!;
+const GEMINI_API_KEYS = [apiKey1, apiKey2];
 export async function withGeminiRetry<T>(
   fn: (client: GoogleGenerativeAI) => Promise<T>,
 ): Promise<T> {

@@ -1,0 +1,86 @@
+[
+  {
+    "idx": 0,
+    "id": "009bfa60-94e9-488a-97d8-1e4df3a5dd73",
+    "session_id": "9970596a-752b-4a8a-b41c-bae067293947",
+    "scenario": "job_interview",
+    "user_message": "yes i am a software engineer",
+    "ai_response": "Great! So, Kamran, could you tell me a bit about your current role or your most recent experience as a software engineer?",
+    "feedback_score": 5,
+    "conversation_context": "{}",
+    "created_at": "2026-04-07 17:39:41.756978+00",
+    "corrected_text": null,
+    "correction_explanation": null,
+    "context_summary": null,
+    "mode": "conversation",
+    "is_completed": false
+  },
+  {
+    "idx": 1,
+    "id": "0156bb21-8e0a-4a27-a7be-614be6a3ce3d",
+    "session_id": "91976c44-5dfa-42e5-b597-1d77f58573b9",
+    "scenario": "job_interview",
+    "user_message": "i overcome by first analyze problem and then use algrothim",
+    "ai_response": "That's an interesting approach. Could you elaborate a bit more on what kind of algorithm you used in that situation?",
+    "feedback_score": 7,
+    "conversation_context": "{}",
+    "created_at": "2026-01-26 05:20:37.091182+00",
+    "corrected_text": "I overcame it by first analyzing the problem and then using an algorithm.",
+    "correction_explanation": "You used 'overcome' in the present tense, but you're describing something that happened in the past, so 'overcame' is correct. Also, we usually say 'analyzing *the* problem' and 'using *an* algorithm' to be more specific and grammatically complete.",
+    "context_summary": null,
+    "mode": "conversation",
+    "is_completed": false
+  },
+  [
+    {
+      "idx": 11,
+      "id": "0d3ce323-51f3-4beb-a307-28ea4ee7bd0f",
+      "session_id": "b73ac02b-1ef0-4fee-adb2-dbaf83e5b7c0",
+      "scenario": "shopping",
+      "user_message": "give me something best in tdays date",
+      "ai_response": "Okay! Are you looking for something from our new collection, or maybe something that's very popular right now?",
+      "feedback_score": 4,
+      "conversation_context": "{}",
+      "created_at": "2026-01-22 05:46:51.78487+00",
+      "corrected_text": "Give me something best today.",
+      "correction_explanation": "The phrase 'in today's date' is generally used when talking about official documents or specific points in time. When you want something 'for today' or 'from today', simply 'today' is more natural and common.",
+      "context_summary": null,
+      "mode": "conversation",
+      "is_completed": false
+    }
+  ],
+  [
+    {
+      "idx": 11,
+      "id": "0d3ce323-51f3-4beb-a307-28ea4ee7bd0f",
+      "session_id": "b73ac02b-1ef0-4fee-adb2-dbaf83e5b7c0",
+      "scenario": "shopping",
+      "user_message": "give me something best in tdays date",
+      "ai_response": "Okay! Are you looking for something from our new collection, or maybe something that's very popular right now?",
+      "feedback_score": 4,
+      "conversation_context": "{}",
+      "created_at": "2026-01-22 05:46:51.78487+00",
+      "corrected_text": "Give me something best today.",
+      "correction_explanation": "The phrase 'in today's date' is generally used when talking about official documents or specific points in time. When you want something 'for today' or 'from today', simply 'today' is more natural and common.",
+      "context_summary": null,
+      "mode": "conversation",
+      "is_completed": false
+    },
+    {
+      "idx": 56,
+      "id": "6947137c-9a2e-45e8-9eab-635415300ae1",
+      "session_id": "1e4dd5e0-6ed5-49d6-8601-540a8bd67de6",
+      "scenario": "restaurant",
+      "user_message": "yes please",
+      "ai_response": "Excellent! Are you ready to order, or do you need a few more minutes?",
+      "feedback_score": 2,
+      "conversation_context": "{}",
+      "created_at": "2026-03-04 20:49:44.310923+00",
+      "corrected_text": "Yes, I'm ready to order, please.",
+      "correction_explanation": "While 'yes please' is polite, in a restaurant context, it's more helpful to be specific about what you're saying 'yes' to. Adding 'I'm ready to order' makes your intention clear to the waiter.",
+      "context_summary": null,
+      "mode": "conversation",
+      "is_completed": false
+    }
+  ]
+]

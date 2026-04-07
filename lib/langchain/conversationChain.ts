@@ -9,8 +9,9 @@ const MEM0_HEADERS = {
 };
 
 /* ================= GEMINI KEYS ================= */
-const apiKey = process.env.GEMINI_API_KEY1!;
-const GEMINI_API_KEYS = [apiKey];
+const apiKey1 = process.env.GEMINI_API_KEY1!;
+const apiKey2 = process.env.GEMINI_API_KEY2!;
+const GEMINI_API_KEYS = [apiKey1, apiKey2];
 
 /* ================= TYPES ================= */
 export interface ConversationAIResponse {
