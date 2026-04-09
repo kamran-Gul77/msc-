@@ -1,0 +1,181 @@
+[
+  {
+    "idx": 0,
+    "id": "174fb751-cce6-478a-ad5e-f0dc82a70108",
+    "display_name": "kami",
+    "proficiency_level": "intermediate",
+    "learning_goals": ["Improve conversation skills"],
+    "preferred_topics": ["Business & Work", "Technology", "Education"],
+    "total_points": 0,
+    "current_level": 1,
+    "created_at": "2026-04-07 17:38:35.856127+00",
+    "updated_at": "2026-04-07 17:38:35.856127+00"
+  },
+  {
+    "idx": 1,
+    "id": "1ef21aac-c016-4cad-ab7f-5016ea447f90",
+    "display_name": "farhan",
+    "proficiency_level": "intermediate",
+    "learning_goals": ["Business English"],
+    "preferred_topics": ["Politics & Current Affairs"],
+    "total_points": 0,
+    "current_level": 1,
+    "created_at": "2025-11-01 07:33:08.056873+00",
+    "updated_at": "2025-11-01 07:33:08.056873+00"
+  },
+  {
+    "idx": 2,
+    "id": "1fe08318-e7df-422d-a97e-e9732f43db92",
+    "display_name": "rizvi",
+    "proficiency_level": "intermediate",
+    "learning_goals": ["Business English"],
+    "preferred_topics": ["Food & Cooking"],
+    "total_points": 0,
+    "current_level": 1,
+    "created_at": "2025-11-08 05:45:36.114527+00",
+    "updated_at": "2025-11-08 05:45:36.114527+00"
+  },
+  {
+    "idx": 3,
+    "id": "3fde32db-2240-4a8e-a90e-76345289ddf1",
+    "display_name": "fadi",
+    "proficiency_level": "advanced",
+    "learning_goals": ["Business English"],
+    "preferred_topics": ["Politics & Current Affairs"],
+    "total_points": 615,
+    "current_level": 3,
+    "created_at": "2025-11-08 05:46:37.029468+00",
+    "updated_at": "2026-02-12 17:36:45.003+00"
+  },
+  {
+    "idx": 4,
+    "id": "44e17626-6ab6-4c76-bd7c-c60a87478568",
+    "display_name": "sara",
+    "proficiency_level": "intermediate",
+    "learning_goals": ["Prepare for exams"],
+    "preferred_topics": ["Entertainment"],
+    "total_points": 0,
+    "current_level": 1,
+    "created_at": "2026-01-22 09:00:44.551939+00",
+    "updated_at": "2026-01-22 09:00:44.551939+00"
+  },
+  {
+    "idx": 5,
+    "id": "4546e165-e13f-45f2-ad60-5cc23f1fc224",
+    "display_name": "jlo",
+    "proficiency_level": "beginner",
+    "learning_goals": [
+      "Business English",
+      "Travel communication",
+      "Prepare for exams",
+      "Enhance vocabulary",
+      "Improve conversation skills",
+      "Master grammar rules",
+      "Professional communication",
+      "Academic writing"
+    ],
+    "preferred_topics": [
+      "Politics & Current Affairs",
+      "Food & Cooking",
+      "Entertainment",
+      "Health & Medicine",
+      "Travel & Tourism",
+      "Science",
+      "Sports",
+      "Education",
+      "Technology",
+      "Business & Work"
+    ],
+    "total_points": 465,
+    "current_level": 3,
+    "created_at": "2026-01-22 09:11:16.158221+00",
+    "updated_at": "2026-04-07 18:34:48.398+00"
+  },
+  {
+    "idx": 6,
+    "id": "54f38a9a-11cd-4c52-937f-c58292268271",
+    "display_name": "rabia",
+    "proficiency_level": "intermediate",
+    "learning_goals": ["Business English"],
+    "preferred_topics": ["Politics & Current Affairs"],
+    "total_points": 200,
+    "current_level": 2,
+    "created_at": "2025-11-22 16:12:09.495104+00",
+    "updated_at": "2026-01-18 22:19:29.152+00"
+  },
+  {
+    "idx": 7,
+    "id": "5a8c84c3-0e90-41e3-b9b9-bc54acb1a202",
+    "display_name": "kkk",
+    "proficiency_level": "advanced",
+    "learning_goals": [
+      "Improve conversation skills",
+      "Master grammar rules",
+      "Professional communication"
+    ],
+    "preferred_topics": ["Business & Work", "Technology", "Education"],
+    "total_points": 60,
+    "current_level": 1,
+    "created_at": "2026-01-18 22:21:11.127694+00",
+    "updated_at": "2026-01-22 08:50:59.415+00"
+  },
+  {
+    "idx": 8,
+    "id": "9b5f5f45-a9ef-4971-ba4b-9b84d9a2162c",
+    "display_name": "gill",
+    "proficiency_level": "advanced",
+    "learning_goals": ["Business English"],
+    "preferred_topics": ["Politics & Current Affairs"],
+    "total_points": 5,
+    "current_level": 1,
+    "created_at": "2025-11-26 17:54:01.154669+00",
+    "updated_at": "2026-02-03 07:10:10.131+00"
+  },
+  {
+    "idx": 9,
+    "id": "a3652101-ffa3-46c0-a79e-60ed95418064",
+    "display_name": "alex",
+    "proficiency_level": "beginner",
+    "learning_goals": [
+      "Improve conversation skills",
+      "Enhance vocabulary",
+      "Master grammar rules",
+      "Professional communication",
+      "Travel communication",
+      "Business English"
+    ],
+    "preferred_topics": ["Business & Work", "Technology", "Education"],
+    "total_points": 15,
+    "current_level": 1,
+    "created_at": "2026-02-23 12:03:01.715068+00",
+    "updated_at": "2026-03-29 22:04:23.528+00"
+  },
+  {
+    "idx": 10,
+    "id": "dab88a2f-2672-462a-8861-7c2cf2b707fb",
+    "display_name": "amo",
+    "proficiency_level": "beginner",
+    "learning_goals": ["Improve conversation skills"],
+    "preferred_topics": ["Education"],
+    "total_points": 3,
+    "current_level": 1,
+    "created_at": "2026-02-14 11:09:06.795844+00",
+    "updated_at": "2026-02-14 11:09:06.795844+00"
+  },
+  {
+    "idx": 11,
+    "id": "f85e55e1-bad6-4c64-af01-cd228712701e",
+    "display_name": "dani",
+    "proficiency_level": "intermediate",
+    "learning_goals": [
+      "Enhance vocabulary",
+      "Prepare for exams",
+      "Improve conversation skills"
+    ],
+    "preferred_topics": ["Technology"],
+    "total_points": 45,
+    "current_level": 1,
+    "created_at": "2026-03-04 20:30:50.166109+00",
+    "updated_at": "2026-03-04 21:00:15.805+00"
+  }
+]

@@ -1,6 +1,9 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
 CREATE TABLE public.achievements (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -70,8 +73,23 @@ CREATE TABLE public.grammar_exercises (
   blank_position integer,
   user_id uuid,
   proficiency_level text DEFAULT 'beginner'::text CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  pool_id uuid,
   CONSTRAINT grammar_exercises_pkey PRIMARY KEY (id),
-  CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id)
+  CONSTRAINT grammar_exercises_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.learning_sessions(id),
+  CONSTRAINT grammar_exercises_pool_id_fkey FOREIGN KEY (pool_id) REFERENCES public.grammar_pool(id)
+);
+CREATE TABLE public.grammar_knowledge (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title text,
+  rule text NOT NULL,
+  explanation text NOT NULL,
+  examples text,
+  proficiency_level text CHECK (proficiency_level = ANY (ARRAY['beginner'::text, 'intermediate'::text, 'advanced'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  keywords ARRAY,
+  difficulty_score integer CHECK (difficulty_score >= 0 AND difficulty_score <= 100),
+  embedding USER-DEFINED,
+  CONSTRAINT grammar_knowledge_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.grammar_pool (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
