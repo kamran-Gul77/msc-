@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { MessageCircle, Mail, Shield, MessageSquare } from "lucide-react";
+import { Mail, Shield, MessageSquare } from "lucide-react";
+import logo from "@/app/icon.png";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -8,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <MessageCircle className="h-6 w-6 text-yellow-400" />
+              <Image src={logo} alt="logo" className="h-12 w-12 " />
               <span className="text-lg font-bold text-white">linguaAi</span>
             </div>
             <p className="text-gray-400 text-sm">
@@ -111,7 +113,7 @@ export function Footer() {
 
         <div className="border-t border-[#303030] mt-8 pt-8 text-center">
           <p className="text-gray-400 text-sm">
-            © 2024 linguaAi. All rights reserved. Built with care for English
+            © 2026 linguaAi. All rights reserved. Built with care for English
             learners worldwide.
           </p>
         </div>

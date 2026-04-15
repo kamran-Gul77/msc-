@@ -15,7 +15,8 @@ import { useAuth } from "@/components/providers";
 import { Brain, BookOpen, MessageCircle, Target } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { Description } from "@radix-ui/react-toast";
+import Image from "next/image";
+import logo from "@/app/icon.png";
 
 export function AuthPage() {
   const { toast } = useToast();
@@ -131,7 +132,7 @@ export function AuthPage() {
         <div className="hidden lg:flex flex-col space-y-8 max-w-lg">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-              <Brain className="h-8 w-8 text-[#fff]" />
+              <Image src={logo} alt="logo" className="h-12 w-12 " />
               <span className="text-xl font-bold text-white">LinguaAi</span>
             </Link>
 
@@ -190,7 +191,7 @@ export function AuthPage() {
         <Card className="w-full max-w-md shadow-xl border border-[#303030] bg-[#212121] text-white">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4 lg:hidden">
-              <Brain className="h-8 w-8 text-yellow-400" />
+              <Image src={logo} alt="logo" className="h-8 w-8 " />
             </div>
             <CardTitle className="text-2xl font-bold text-white">
               Welcome to LinguaAI

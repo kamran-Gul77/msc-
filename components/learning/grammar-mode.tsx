@@ -441,31 +441,33 @@ export function GrammarMode({ profile }: GrammarModeProps) {
   return (
     <div className="space-y-6">
       {/* Stats Header */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
-          <CardContent className="p-4 text-center">
-            <BookOpen className="h-6 w-6 text-gray-300 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats?.total_exercises}</p>
-            <p className="text-sm text-gray-400">Exercises</p>
-          </CardContent>
-        </Card>
+      {showStarter && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
+            <CardContent className="p-4 text-center">
+              <BookOpen className="h-6 w-6 text-gray-300 mx-auto mb-2" />
+              <p className="text-2xl font-bold">{stats?.total_exercises}</p>
+              <p className="text-sm text-gray-400">Exercises</p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats?.total_correct}</p>
-            <p className="text-sm text-gray-400">Correct</p>
-          </CardContent>
-        </Card>
+          <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
+            <CardContent className="p-4 text-center">
+              <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
+              <p className="text-2xl font-bold">{stats?.total_correct}</p>
+              <p className="text-sm text-gray-400">Correct</p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
-          <CardContent className="p-4 text-center">
-            <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{stats?.total_points}</p>
-            <p className="text-sm text-gray-400">Points</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="bg-[#212121] border border-[#303030] text-[#fff]">
+            <CardContent className="p-4 text-center">
+              <Star className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+              <p className="text-2xl font-bold">{stats?.total_points}</p>
+              <p className="text-sm text-gray-400">Points</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button
@@ -681,11 +683,21 @@ export function GrammarMode({ profile }: GrammarModeProps) {
                       <Button
                         onClick={() => generateNewExercise()}
                         disabled={loading}
-                        className="bg-[#121212] text-white min-w-32"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
                       >
                         Next Exercise
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowStarter(true);
+                        setCurrentExercise(null);
+                      }}
+                      className="bg-[#121212] text-white min-w-32"
+                    >
+                      Back
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

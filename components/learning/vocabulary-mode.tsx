@@ -169,8 +169,8 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
           options: Array.isArray(exerciseRow.options)
             ? exerciseRow.options
             : exerciseRow.options
-            ? JSON.parse(exerciseRow.options)
-            : [],
+              ? JSON.parse(exerciseRow.options)
+              : [],
           correct_answer: exerciseRow.correct_answer,
           definition: exerciseRow.definition || undefined,
           example_sentence:
@@ -194,7 +194,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         setLoading(false);
       }
     },
-    [profile?.proficiency_level, sessionId, user?.id, toast]
+    [profile?.proficiency_level, sessionId, user?.id, toast],
   );
 
   // ------------------- HANDLE ANSWER -------------------
@@ -264,7 +264,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
             date: new Date().toISOString().split("T")[0],
             vocabulary_accuracy: accuracy,
           },
-          { onConflict: "user_id,date" }
+          { onConflict: "user_id,date" },
         );
 
         setStats((prev) => ({
@@ -279,7 +279,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
         console.error("updateGrammarAccuracy error:", err);
       }
     },
-    [supabase]
+    [supabase],
   );
 
   // ------------------- HISTORY -------------------
@@ -549,10 +549,10 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
                             showResult && isCorrectOption
                               ? "border-green-500 bg-green-500"
                               : showResult && isSelected && !isCorrectOption
-                              ? "border-red-500 bg-red-500"
-                              : isSelected
-                              ? "border-purple-400 bg-purple-400"
-                              : "border-gray-500"
+                                ? "border-red-500 bg-red-500"
+                                : isSelected
+                                  ? "border-purple-400 bg-purple-400"
+                                  : "border-gray-500"
                           }`}
                         >
                           {showResult && isCorrectOption ? (
@@ -606,9 +606,9 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
                   <Button
                     onClick={handleAnswer}
                     disabled={!selectedAnswer}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 min-w-32"
+                    className="bg-[#121212] text-white min-w-32"
                   >
-                    Submit Answer
+                    Check Answer
                   </Button>
                 ) : (
                   <>
@@ -624,7 +624,7 @@ export function VocabularyMode({ profile }: VocabularyModeProps) {
                         setShowStarter(true);
                         setCurrentExercise(null);
                       }}
-                      className="border-purple-500 text-purple-400 hover:bg-[#212121]"
+                      className="bg-[#121212] text-white min-w-32"
                     >
                       Back
                     </Button>

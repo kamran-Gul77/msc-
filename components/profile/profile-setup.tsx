@@ -21,7 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/components/providers";
 import { createClient } from "@/lib/supabase/client";
 import { Brain, User, Target, BookOpen } from "lucide-react";
-
+import logo from "@/app/icon.png";
+import Image from "next/image";
 interface ProfileSetupProps {
   onComplete: (profile: any) => void;
 }
@@ -125,7 +126,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
       <Card className="w-full max-w-2xl shadow-xl border border-[#303030] bg-[#1a1a1a] text-white">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Brain className="h-12 w-12 text-yellow-400" />
+            <Image src={logo} alt="logo" className="h-12 w-12 " />
           </div>
           <CardTitle className="text-2xl font-bold text-white">
             Welcome to LinguaAI
