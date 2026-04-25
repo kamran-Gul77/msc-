@@ -48,7 +48,7 @@ export default function HomePage() {
               AI-Powered English Learning
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 text-balance">
-              Master English with Your Personal Lingu ai
+              Master English with Your Personal AI Tutor
             </h1>
             <p className="text-xl text-gray-400 mb-8 text-pretty max-w-2xl mx-auto">
               Learn vocabulary, perfect your grammar, and practice conversations
